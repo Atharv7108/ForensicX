@@ -5,6 +5,7 @@ import tempfile
 import pickle
 import torch
 from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from PIL import Image
 from torchvision import models, transforms
@@ -14,6 +15,15 @@ import fitz  # PyMuPDF
 
 # --- FastAPI app ---
 app = FastAPI(title="ForensicX Multi-Modal Detector API")
+
+# --- CORS middleware ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:8082"],  # Frontend URLs
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- Base directory ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -71,11 +81,15 @@ def extract_text_and_images_from_pdf(pdf_path):
     doc = fitz.open(pdf_path)
     text = ""
     images = []
+    seen_xrefs = set()
     for page_num in range(len(doc)):
         page = doc[page_num]
         text += page.get_text()
         for img_index, img in enumerate(page.get_images(full=True)):
             xref = img[0]
+            if xref in seen_xrefs:
+                continue
+            seen_xrefs.add(xref)
             base_image = doc.extract_image(xref)
             image_bytes = base_image["image"]
             image_ext = base_image["ext"]
@@ -164,7 +178,7 @@ async def detect_pdf(file: UploadFile = File(...)):
 
     # Clean up temp file
     os.remove(tmp_path)
-    return {"text_result": text_result, "images": classified_images}
+    return {"text_result": text_result, "images": classified_images, "extracted_text": text}
 
 # --- Image detection endpoint with OCR integration ---
 @app.post("/detect-image")

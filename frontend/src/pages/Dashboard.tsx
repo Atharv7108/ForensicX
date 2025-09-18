@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  FileText, 
-  ImageIcon, 
-  FileCheck, 
-  Zap, 
-  Shield, 
-  AlertTriangle, 
+import {
+  FileText,
+  ImageIcon,
+  FileCheck,
+  Zap,
+  Shield,
+  AlertTriangle,
   CheckCircle,
   User,
   Settings,
@@ -23,6 +23,7 @@ import {
   Database,
   Globe
 } from "lucide-react";
+import { detectText, detectImage, detectPdf } from "@/services/api";
 
 export default function Dashboard() {
   const [textInput, setTextInput] = useState("");
@@ -39,25 +40,33 @@ export default function Dashboard() {
 
   const handleTextAnalysis = async () => {
     if (!textInput.trim()) return;
-    
+
     setIsAnalyzing(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const mockResult = {
-        confidence: Math.random() * 100,
-        isAI: Math.random() > 0.5,
-        highlights: [
-          { start: 0, end: Math.min(50, textInput.length), type: "ai", confidence: 85 },
-          { start: Math.min(60, textInput.length), end: Math.min(120, textInput.length), type: "human", confidence: 92 },
-          { start: Math.min(130, textInput.length), end: Math.min(180, textInput.length), type: "ai", confidence: 78 },
-        ],
+
+    try {
+      const result = await detectText(textInput);
+      const isAI = result.label === "AI";
+      const confidence = result.confidence * 100; // Convert to percentage
+
+      // For highlights, we'll create a simple mock since the API doesn't provide them
+      const highlights = [
+        { start: 0, end: Math.min(50, textInput.length), type: isAI ? "ai" : "human", confidence: confidence },
+      ];
+
+      const analysisResult = {
+        confidence: confidence,
+        isAI: isAI,
+        highlights: highlights,
         analyzedText: textInput,
       };
-      
-      setAnalysisResult(mockResult);
+
+      setAnalysisResult(analysisResult);
+    } catch (error) {
+      console.error("Error detecting text:", error);
+      // Handle error - could show a toast or alert
+    } finally {
       setIsAnalyzing(false);
-    }, 2000);
+    }
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,72 +83,129 @@ export default function Dashboard() {
 
   const handleImageAnalysis = async () => {
     if (!imageFile) return;
-    
+
     setIsAnalyzing(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const mockResult = {
-        confidence: Math.random() * 100,
-        isAI: Math.random() > 0.5,
-        detectedElements: [
-          { type: "AI Generated", confidence: 92, selected: true },
-          { type: "AI Enhanced", confidence: 67, selected: false },
-          { type: "Real", confidence: 23, selected: false },
-        ],
+
+    try {
+      const result = await detectImage(imageFile);
+      const isAI = result.image_result.label !== "natural";
+      const confidence = result.image_result.confidence ? result.image_result.confidence * 100 : 0;
+
+      // Map API response to frontend format
+      const detectedElements = [
+        { type: "AI Generated", confidence: result.image_result.label === "ai_generated" ? confidence : 0, selected: result.image_result.label === "ai_generated" },
+        { type: "AI Enhanced", confidence: result.image_result.label === "ai_enhanced" ? confidence : 0, selected: result.image_result.label === "ai_enhanced" },
+        { type: "Real", confidence: result.image_result.label === "natural" ? confidence : 0, selected: result.image_result.label === "natural" },
+      ];
+
+      const analysisResult = {
+        confidence: confidence,
+        isAI: isAI,
+        detectedElements: detectedElements,
+        ocrText: result.text_result ? result.text_result.text : "",
+        textAnalysis: result.text_result ? {
+          isAI: result.text_result.label === "AI",
+          confidence: result.text_result.confidence * 100,
+          text: result.text_result.text,
+        } : null,
       };
-      
-      setImageAnalysisResult(mockResult);
+
+      setImageAnalysisResult(analysisResult);
+    } catch (error) {
+      console.error("Error detecting image:", error);
+      // Handle error
+    } finally {
       setIsAnalyzing(false);
-    }, 3000);
+    }
   };
 
-  const handlePdfUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePdfUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setPdfFile(file);
-      // Simulate PDF text extraction
-      const mockText = `This is extracted text from the PDF document. 
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. This section appears to be written by AI based on repetitive patterns and unnatural flow.
+      try {
+        // Extract text from PDF using the backend API
+        const result = await detectPdf(file);
 
-Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
-
-The following paragraph shows characteristics typical of human writing with natural variations and personal insights that reflect genuine experience and knowledge.`;
-      
-      setPdfText(mockText);
+        // Use the extracted_text from API response if available
+        if (result.extracted_text) {
+          setPdfText(result.extracted_text);
+        } else if (result.text_result) {
+          setPdfText("PDF text extraction in progress... Click 'Analyze PDF Content' to process the document.");
+        } else {
+          setPdfText("No text found in the PDF document, or text extraction failed.");
+        }
+      } catch (error) {
+        console.error("Error extracting PDF text:", error);
+        setPdfText("Error extracting text from PDF. Please try again.");
+      }
     }
   };
 
   const handlePdfAnalysis = async () => {
-    if (!pdfFile || !pdfText) return;
-    
+    if (!pdfFile) return;
+
     setIsAnalyzing(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const mockResult = {
-        confidence: Math.random() * 100,
-        isAI: Math.random() > 0.5,
-        highlights: [
-          { start: 80, end: 200, type: "ai", confidence: 89 },
-          { start: 250, end: 350, type: "human", confidence: 94 },
-          { start: 400, end: 520, type: "human", confidence: 88 },
-        ],
-        analyzedText: pdfText,
+
+    try {
+      // Use the comprehensive PDF detection that handles both text and images
+      const result = await detectPdf(pdfFile);
+
+      // Handle text analysis results with highlights for AI detected text
+      let textAnalysisResult = null;
+      if (result.text_result) {
+        const isAI = result.text_result.label === "AI";
+        const confidence = result.text_result.confidence * 100;
+
+        // For highlighting, we will mark the entire extracted text as AI or human
+        // In a real scenario, you might want to implement more granular highlighting
+            textAnalysisResult = {
+              confidence: confidence,
+              isAI: isAI,
+              highlights: [
+                // Highlight the entire text if AI detected, else no highlights
+                { start: 0, end: result.extracted_text.length, type: isAI ? "ai" : "human", confidence: confidence },
+              ],
+              analyzedText: result.extracted_text,
+            };
+      }
+
+      // Handle image analysis results
+      const imageResults = result.images.map((img, index) => ({
+        imageIndex: index + 1,
+        page: img.page,
+        imageLabel: img.image_label,
+        imageConfidence: img.image_confidence * 100,
+        ocrText: img.ocr_text,
+        textAnalysis: img.text_result ? {
+          isAI: img.text_result.label === "AI",
+          confidence: img.text_result.confidence * 100,
+          text: img.text_result.text,
+        } : null,
+      }));
+
+      const analysisResult = {
+        textResult: textAnalysisResult,
+        imageResults: imageResults,
+        extractedText: result.extracted_text,
       };
-      
-      setPdfAnalysisResult(mockResult);
+
+      setPdfAnalysisResult(analysisResult);
+    } catch (error) {
+      console.error("Error analyzing PDF:", error);
+      // Handle error
+    } finally {
       setIsAnalyzing(false);
-    }, 2500);
+    }
   };
 
   const renderHighlightedText = (text: string, highlights: any[]) => {
     if (!highlights || highlights.length === 0) return text;
-    
+
     let result = [];
     let lastIndex = 0;
-    
+
     highlights.forEach((highlight, index) => {
       // Add text before highlight
       if (highlight.start > lastIndex) {
@@ -149,14 +215,14 @@ The following paragraph shows characteristics typical of human writing with natu
           </span>
         );
       }
-      
-      // Add highlighted text
+
+      // Add highlighted text - using yellow for AI detection
       result.push(
         <span
           key={`highlight-${index}`}
           className={`px-1 rounded ${
-            highlight.type === 'ai' 
-              ? 'bg-destructive/20 text-destructive border border-destructive/30' 
+            highlight.type === 'ai'
+              ? 'bg-yellow-200 text-yellow-900 border border-yellow-400'
               : 'bg-neon-green/20 text-neon-green border border-neon-green/30'
           }`}
           title={`${highlight.type === 'ai' ? 'AI Generated' : 'Human Written'} - ${highlight.confidence}% confidence`}
@@ -164,10 +230,10 @@ The following paragraph shows characteristics typical of human writing with natu
           {text.slice(highlight.start, highlight.end)}
         </span>
       );
-      
+
       lastIndex = highlight.end;
     });
-    
+
     // Add remaining text
     if (lastIndex < text.length) {
       result.push(
@@ -176,7 +242,7 @@ The following paragraph shows characteristics typical of human writing with natu
         </span>
       );
     }
-    
+
     return result;
   };
 
@@ -189,7 +255,7 @@ The following paragraph shows characteristics typical of human writing with natu
             <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary to-accent flex items-center justify-center">
               <Shield className="w-5 h-5 text-white" />
             </div>
-            <span className="font-semibold">AI Detector</span>
+            <span className="font-semibold">ForensicX</span>
           </div>
           
           <div className="flex items-center gap-4">
@@ -363,7 +429,7 @@ The following paragraph shows characteristics typical of human writing with natu
                           </div>
                           <div className="flex gap-4 text-xs">
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 bg-destructive/20 border border-destructive/30 rounded"></div>
+                              <div className="w-3 h-3 bg-yellow-200 border border-yellow-400 rounded"></div>
                               <span>AI Generated</span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -433,14 +499,14 @@ The following paragraph shows characteristics typical of human writing with natu
                   <div className="space-y-4 p-6 rounded-lg glass border border-border/50">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-semibold">Image Analysis Results</h3>
-                      <Badge 
+                      <Badge
                         variant={imageAnalysisResult.isAI ? "destructive" : "default"}
                         className={imageAnalysisResult.isAI ? "bg-destructive" : "bg-neon-green"}
                       >
                         {imageAnalysisResult.isAI ? "AI Generated" : "Authentic"}
                       </Badge>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span>Overall Confidence</span>
@@ -456,8 +522,8 @@ The following paragraph shows characteristics typical of human writing with natu
                       {imageAnalysisResult.detectedElements.map((element: any, index: number) => (
                         <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-background/30 border border-border/20">
                           <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                            element.selected 
-                              ? 'bg-neon-green text-background' 
+                            element.selected
+                              ? 'bg-neon-green text-background'
                               : 'border-2 border-border'
                           }`}>
                             {element.selected && <CheckCircle className="w-4 h-4" />}
@@ -471,6 +537,75 @@ The following paragraph shows characteristics typical of human writing with natu
                         </div>
                       ))}
                     </div>
+
+                    {/* OCR Text and Analysis */}
+                    {imageAnalysisResult.ocrText && (
+                      <div className="space-y-4 border-t border-border/30 pt-4">
+                        <h4 className="text-md font-medium">Extracted Text Analysis:</h4>
+
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-medium">OCR Text:</h5>
+                          <div className="p-4 rounded-lg bg-background/50 border border-border/30 text-sm leading-relaxed">
+                            {imageAnalysisResult.ocrText}
+                          </div>
+                        </div>
+
+                        {imageAnalysisResult.textAnalysis && (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <h5 className="text-sm font-medium">Text Content Analysis:</h5>
+                              <Badge
+                                variant={imageAnalysisResult.textAnalysis.isAI ? "destructive" : "default"}
+                                className={imageAnalysisResult.textAnalysis.isAI ? "bg-destructive" : "bg-neon-green"}
+                              >
+                                {imageAnalysisResult.textAnalysis.isAI ? "AI Detected" : "Human Written"}
+                              </Badge>
+                            </div>
+
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span>Text Confidence Level</span>
+                                <span className="font-medium">
+                                  {imageAnalysisResult.textAnalysis.confidence.toFixed(1)}%
+                                </span>
+                              </div>
+                              <Progress value={imageAnalysisResult.textAnalysis.confidence} />
+                            </div>
+
+                            <div className="text-sm text-muted-foreground">
+                              {imageAnalysisResult.textAnalysis.isAI
+                                ? "The extracted text shows patterns consistent with AI-generated content."
+                                : "The extracted text appears to be human-written."
+                              }
+                            </div>
+
+                            <div className="space-y-2">
+                              <h6 className="text-sm font-medium">Highlighted Content:</h6>
+                              <div className="p-4 rounded-lg bg-background/50 border border-border/30 text-sm leading-relaxed">
+                                {renderHighlightedText(imageAnalysisResult.textAnalysis.text, [
+                                  {
+                                    start: 0,
+                                    end: Math.min(50, imageAnalysisResult.textAnalysis.text.length),
+                                    type: imageAnalysisResult.textAnalysis.isAI ? "ai" : "human",
+                                    confidence: imageAnalysisResult.textAnalysis.confidence
+                                  }
+                                ])}
+                              </div>
+                              <div className="flex gap-4 text-xs">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 bg-yellow-200 border border-yellow-400 rounded"></div>
+                                  <span>AI Generated</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 bg-neon-green/20 border border-neon-green/30 rounded"></div>
+                                  <span>Human Written</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -531,51 +666,120 @@ The following paragraph shows characteristics typical of human writing with natu
                   <div className="space-y-4 p-6 rounded-lg glass border border-border/50">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-semibold">PDF Analysis Results</h3>
-                      <Badge 
-                        variant={pdfAnalysisResult.isAI ? "destructive" : "default"}
-                        className={pdfAnalysisResult.isAI ? "bg-destructive" : "bg-neon-green"}
+                      <Badge
+                        variant={pdfAnalysisResult.textResult?.isAI ? "destructive" : "default"}
+                        className={pdfAnalysisResult.textResult?.isAI ? "bg-destructive" : "bg-neon-green"}
                       >
-                        {pdfAnalysisResult.isAI ? "AI Detected" : "Human Written"}
+                        {pdfAnalysisResult.textResult?.isAI ? "AI Detected" : "Human Written"}
                       </Badge>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Confidence Level</span>
-                        <span className="font-medium">
-                          {pdfAnalysisResult.confidence.toFixed(1)}%
-                        </span>
-                      </div>
-                      <Progress value={pdfAnalysisResult.confidence} />
-                    </div>
 
-                    <div className="space-y-4">
-                      <div className="text-sm text-muted-foreground">
-                        {pdfAnalysisResult.isAI 
-                          ? "This PDF content shows patterns consistent with AI-generated text."
-                          : "This PDF content appears to be human-written."
-                        }
-                      </div>
-
-                      {pdfAnalysisResult.analyzedText && (
+                    {/* Text Analysis Results */}
+                    {pdfAnalysisResult.textResult && (
+                      <div className="space-y-4">
+                        <h4 className="text-md font-medium">Text Content Analysis:</h4>
                         <div className="space-y-2">
-                          <h4 className="text-sm font-medium">Highlighted Content:</h4>
-                          <div className="p-4 rounded-lg bg-background/50 border border-border/30 text-sm leading-relaxed max-h-64 overflow-y-auto">
-                            {renderHighlightedText(pdfAnalysisResult.analyzedText, pdfAnalysisResult.highlights)}
+                          <div className="flex items-center justify-between text-sm">
+                            <span>Confidence Level</span>
+                            <span className="font-medium">
+                              {pdfAnalysisResult.textResult.confidence.toFixed(1)}%
+                            </span>
                           </div>
-                          <div className="flex gap-4 text-xs">
-                            <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 bg-destructive/20 border border-destructive/30 rounded"></div>
-                              <span>AI Generated</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 bg-neon-green/20 border border-neon-green/30 rounded"></div>
-                              <span>Human Written</span>
-                            </div>
-                          </div>
+                          <Progress value={pdfAnalysisResult.textResult.confidence} />
                         </div>
-                      )}
-                    </div>
+
+                        <div className="text-sm text-muted-foreground">
+                          {pdfAnalysisResult.textResult.isAI
+                            ? "This PDF text content shows patterns consistent with AI-generated text."
+                            : "This PDF text content appears to be human-written."
+                          }
+                        </div>
+
+                        {pdfAnalysisResult.textResult.analyzedText && (
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-medium">Highlighted Content:</h4>
+                            <div className="p-4 rounded-lg bg-background/50 border border-border/30 text-sm leading-relaxed max-h-64 overflow-y-auto">
+                              {renderHighlightedText(pdfAnalysisResult.textResult.analyzedText, pdfAnalysisResult.textResult.highlights)}
+                            </div>
+                            <div className="flex gap-4 text-xs">
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 bg-yellow-200 border border-yellow-400 rounded"></div>
+                                <span>AI Generated</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 bg-neon-green/20 border border-neon-green/30 rounded"></div>
+                                <span>Human Written</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Image Analysis Results */}
+                    {pdfAnalysisResult.imageResults && pdfAnalysisResult.imageResults.length > 0 && (
+                      <div className="space-y-4 border-t border-border/30 pt-4">
+                        <h4 className="text-md font-medium">Image Analysis Results:</h4>
+                        <div className="space-y-4">
+                          {pdfAnalysisResult.imageResults.map((imgResult: any, index: number) => (
+                            <div key={index} className="p-4 rounded-lg bg-background/30 border border-border/20">
+                              <div className="flex items-center justify-between mb-3">
+                                <h5 className="text-sm font-medium">Image {imgResult.imageIndex} (Page {imgResult.page})</h5>
+                                <Badge
+                                  variant={imgResult.imageLabel !== "natural" ? "destructive" : "default"}
+                                  className={imgResult.imageLabel !== "natural" ? "bg-destructive" : "bg-neon-green"}
+                                >
+                                  {imgResult.imageLabel === "ai_generated" ? "AI Generated" :
+                                   imgResult.imageLabel === "ai_enhanced" ? "AI Enhanced" : "Authentic"}
+                                </Badge>
+                              </div>
+
+                              <div className="space-y-2 mb-3">
+                                <div className="flex items-center justify-between text-sm">
+                                  <span>Image Confidence</span>
+                                  <span className="font-medium">
+                                    {imgResult.imageConfidence.toFixed(1)}%
+                                  </span>
+                                </div>
+                                <Progress value={imgResult.imageConfidence} />
+                              </div>
+
+                              {imgResult.ocrText && (
+                                <div className="space-y-2">
+                                  <h6 className="text-xs font-medium text-muted-foreground">OCR Text:</h6>
+                                  <p className="text-sm p-2 bg-background/50 rounded border border-border/20">
+                                    {imgResult.ocrText}
+                                  </p>
+                                </div>
+                              )}
+
+                              {imgResult.textAnalysis && (
+                                <div className="space-y-2 mt-3">
+                                  <h6 className="text-xs font-medium text-muted-foreground">OCR Text Analysis:</h6>
+                                  <div className="flex items-center gap-2">
+                                    <Badge
+                                      variant={imgResult.textAnalysis.isAI ? "destructive" : "default"}
+                                      className={imgResult.textAnalysis.isAI ? "bg-destructive" : "bg-neon-green"}
+                                    >
+                                      {imgResult.textAnalysis.isAI ? "AI Text" : "Human Text"}
+                                    </Badge>
+                                    <span className="text-xs text-muted-foreground">
+                                      {imgResult.textAnalysis.confidence.toFixed(1)}% confidence
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {!pdfAnalysisResult.textResult && (!pdfAnalysisResult.imageResults || pdfAnalysisResult.imageResults.length === 0) && (
+                      <div className="text-center py-8">
+                        <p className="text-muted-foreground">No analyzable content found in the PDF.</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
