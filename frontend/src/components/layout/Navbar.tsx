@@ -10,8 +10,8 @@ export function Navbar() {
   const navItems = [
     { label: "Features", href: "#features" },
     { label: "Pricing", href: "#pricing" },
-    { label: "About", href: "/about" },
-    { label: "Contact", href: "/contact" },
+    { label: "About", href: "#about" },
+    { label: "Contact", href: "#contact" },
   ];
 
   return (

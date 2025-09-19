@@ -5,7 +5,7 @@ import { Check, Star, Zap, Crown } from "lucide-react";
 const plans = [
   {
     name: "Free",
-    price: "$0",
+    price: "₹0",
     period: "/month",
     description: "Perfect for trying out our AI detection capabilities",
     icon: Star,
@@ -21,7 +21,7 @@ const plans = [
   },
   {
     name: "Pro",
-    price: "$29",
+    price: "₹2,399",
     period: "/month",
     description: "Ideal for professionals and content creators",
     icon: Zap,
@@ -40,7 +40,7 @@ const plans = [
   },
   {
     name: "Plus",
-    price: "$99",
+    price: "₹8,199",
     period: "/month",
     description: "For teams and organizations with high-volume needs",
     icon: Crown,
