@@ -14,16 +14,13 @@ import {
   Shield,
   AlertTriangle,
   CheckCircle,
-  User,
-  Settings,
-  LogOut,
   Upload,
   Video,
   Mic,
   Database,
-  Globe
 } from "lucide-react";
 import { detectText, detectImage, detectPdf } from "@/services/api";
+import { Navbar } from "@/components/layout/Navbar";
 
 export default function Dashboard() {
   const [textInput, setTextInput] = useState("");
@@ -242,36 +239,10 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border/50 glass sticky top-0 z-40">
-        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary to-accent flex items-center justify-center">
-              <Shield className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-semibold">ForensicX</span>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <Badge variant="secondary" className="glass">
-              Pro Plan
-            </Badge>
-            <Button variant="ghost" size="sm">
-              <User className="w-4 h-4 mr-2" />
-              Profile
-            </Button>
-            <Button variant="ghost" size="sm">
-              <Settings className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="sm">
-              <LogOut className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
+      <Navbar />
+      
       {/* Main Content */}
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-6 py-8 mt-16">{/* Added mt-16 for navbar spacing */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Detection Dashboard</h1>
           <p className="text-muted-foreground">

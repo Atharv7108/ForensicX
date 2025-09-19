@@ -5,7 +5,7 @@ import tempfile
 import pickle
 import torch
 import re
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from PIL import Image
@@ -14,8 +14,33 @@ import numpy as np
 import easyocr
 import fitz  # PyMuPDF
 
+# Import authentication modules (optional for backwards compatibility)
+try:
+    from .auth_routes import router as auth_router
+    from .auth import get_current_active_user
+    from .database import User
+    AUTH_AVAILABLE = True
+except ImportError:
+    try:
+        # Try absolute imports as fallback
+        import sys
+        import os
+        sys.path.append(os.path.dirname(__file__))
+        from auth_routes import router as auth_router
+        from auth import get_current_active_user
+        from database import User
+        AUTH_AVAILABLE = True
+    except ImportError as e:
+        print(f"Authentication modules not available: {e}")
+        AUTH_AVAILABLE = False
+
 # --- FastAPI app ---
 app = FastAPI(title="ForensicX Multi-Modal Detector API")
+
+# Include authentication routes if available
+if AUTH_AVAILABLE:
+    app.include_router(auth_router)
+    print("✅ Authentication routes loaded successfully")
 
 # --- CORS middleware ---
 app.add_middleware(
