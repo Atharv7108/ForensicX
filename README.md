@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![ForensicX Logo](logo.png)
+![ForensicX Logo](frontend/public/image.png)
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
