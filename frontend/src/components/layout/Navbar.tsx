@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Menu, User, Settings, LogOut, Home } from "lucide-react";
+import { Shield, Menu, User, Settings, LogOut, Home, UserCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function Navbar() {
@@ -19,6 +19,10 @@ export function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Check if user is admin
+  const ADMIN_EMAILS = ['admin@forensicx.com', 'atharvgole@gmail.com'];
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email);
 
   const navItems = [
     { label: "Features", href: "#features" },
@@ -67,6 +71,19 @@ export function Navbar() {
               <Home className="w-4 h-4" />
               Home
             </Button>
+            
+            {/* Admin Panel Button */}
+            {isAdmin && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate("/admin")}
+                className="flex items-center gap-2 text-orange-600 hover:text-orange-700"
+              >
+                <UserCheck className="w-4 h-4" />
+                Admin Panel
+              </Button>
+            )}
             
             <Badge variant="secondary" className="glass">
               Pro Plan
@@ -123,6 +140,21 @@ export function Navbar() {
                   <Home className="w-4 h-4 mr-2" />
                   Home
                 </Button>
+                
+                {/* Admin Panel Button for Mobile */}
+                {isAdmin && (
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => {
+                      navigate("/admin");
+                      setIsOpen(false);
+                    }}
+                    className="justify-start text-orange-600 hover:text-orange-700"
+                  >
+                    <UserCheck className="w-4 h-4 mr-2" />
+                    Admin Panel
+                  </Button>
+                )}
                 
                 <div className="flex flex-col gap-3 mt-6">
                   <div className="text-sm text-muted-foreground px-2">
@@ -184,6 +216,19 @@ export function Navbar() {
               <Button variant="ghost" asChild>
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
+              {/* Admin Panel Button */}
+              {isAdmin && (
+                <Button 
+                  variant="ghost" 
+                  asChild
+                  className="text-orange-600 hover:text-orange-700"
+                >
+                  <Link to="/admin">
+                    <UserCheck className="w-4 h-4 mr-2" />
+                    Admin Panel
+                  </Link>
+                </Button>
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="flex items-center gap-2">
@@ -256,6 +301,19 @@ export function Navbar() {
                         Dashboard
                       </Link>
                     </Button>
+                    {/* Admin Panel Button for Mobile */}
+                    {isAdmin && (
+                      <Button 
+                        variant="outline" 
+                        className="glass text-orange-600 border-orange-600/20 hover:bg-orange-600/10" 
+                        asChild
+                      >
+                        <Link to="/admin" onClick={() => setIsOpen(false)}>
+                          <UserCheck className="w-4 h-4 mr-2" />
+                          Admin Panel
+                        </Link>
+                      </Button>
+                    )}
                     <Button variant="outline" className="glass justify-start">
                       <Settings className="w-4 h-4 mr-2" />
                       Settings

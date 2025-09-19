@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 # Import local modules with error handling
 try:
-    from .database import get_db, create_tables
+    from .database import get_db, create_tables, User
     from .auth import (
         authenticate_user, 
         create_access_token, 
@@ -21,9 +21,14 @@ try:
         Token, 
         LoginRequest
     )
+    # Import WebSocket manager for real-time updates
+    try:
+        from .websocket_manager import manager
+    except ImportError:
+        manager = None
 except ImportError:
     # Fallback to absolute imports
-    from database import get_db, create_tables
+    from database import get_db, create_tables, User
     from auth import (
         authenticate_user, 
         create_access_token, 
@@ -39,6 +44,11 @@ except ImportError:
         Token, 
         LoginRequest
     )
+    # Import WebSocket manager for real-time updates
+    try:
+        from websocket_manager import manager
+    except ImportError:
+        manager = None
 
 # Create router
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -84,6 +94,20 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # Update last login time
+    user.last_login = datetime.utcnow()
+    db.commit()
+    db.refresh(user)
+    
+    # Broadcast user update to admin panel
+    if manager:
+        await manager.send_user_update({
+            "type": "user_login",
+            "user_id": user.id,
+            "email": user.email,
+            "last_login": user.last_login.isoformat() if user.last_login else None
+        })
+    
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
@@ -101,6 +125,20 @@ async def login_json(login_data: LoginRequest, db: Session = Depends(get_db)):
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    # Update last login time
+    user.last_login = datetime.utcnow()
+    db.commit()
+    db.refresh(user)
+    
+    # Broadcast user update to admin panel
+    if manager:
+        await manager.send_user_update({
+            "type": "user_login",
+            "user_id": user.id,
+            "email": user.email,
+            "last_login": user.last_login.isoformat() if user.last_login else None
+        })
     
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(

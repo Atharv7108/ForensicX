@@ -5,7 +5,7 @@ import tempfile
 import pickle
 import torch
 import re
-from fastapi import FastAPI, UploadFile, File, Depends
+from fastapi import FastAPI, UploadFile, File, Depends, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from PIL import Image
@@ -19,6 +19,7 @@ try:
     from .auth_routes import router as auth_router
     from .auth import get_current_active_user
     from .database import User
+    from .websocket_manager import manager
     AUTH_AVAILABLE = True
 except ImportError:
     try:
@@ -29,10 +30,12 @@ except ImportError:
         from auth_routes import router as auth_router
         from auth import get_current_active_user
         from database import User
+        from websocket_manager import manager
         AUTH_AVAILABLE = True
     except ImportError as e:
         print(f"Authentication modules not available: {e}")
         AUTH_AVAILABLE = False
+        manager = None
 
 # --- FastAPI app ---
 app = FastAPI(title="ForensicX Multi-Modal Detector API")
@@ -41,6 +44,21 @@ app = FastAPI(title="ForensicX Multi-Modal Detector API")
 if AUTH_AVAILABLE:
     app.include_router(auth_router)
     print("✅ Authentication routes loaded successfully")
+    
+    # Include admin routes for development
+    try:
+        from .admin_routes import router as admin_router
+        app.include_router(admin_router)
+        print("✅ Admin routes loaded successfully")
+    except ImportError:
+        try:
+            from admin_routes import router as admin_router
+            app.include_router(admin_router)
+            print("✅ Admin routes loaded successfully")
+        except ImportError:
+            print("⚠️  Admin routes not available")
+else:
+    print("⚠️  Authentication modules not available")
 
 # --- CORS middleware ---
 app.add_middleware(
