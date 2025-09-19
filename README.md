@@ -4,6 +4,8 @@
 
 ![ForensicX Logo](frontend/public/image.png)
 
+### 🌐 Live Demo: [https://forensic-x-git-main-atharv-goles-projects.vercel.app/](https://forensic-x-git-main-atharv-goles-projects.vercel.app/)
+
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
