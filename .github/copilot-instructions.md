@@ -4,7 +4,7 @@
 - [ ] Clarify Project Requirements
 	<!-- Ask for project type, language, and frameworks if not specified. Skip if already provided. -->
 
-- [ ] Scaffold the Project
+- [ ] Scaffold the Projectuvicorn backend.text_api:app --reload
 	<!--
 	Ensure that the previous step has been marked as completed.
 	Call project setup tool with projectType parameter.

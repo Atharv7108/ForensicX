@@ -47,17 +47,14 @@ export default function Dashboard() {
       const result = await detectText(textInput);
       const isAI = result.label === "AI";
       const confidence = result.confidence * 100; // Convert to percentage
-
-      // For highlights, we'll create a simple mock since the API doesn't provide them
-      const highlights = [
-        { start: 0, end: Math.min(50, textInput.length), type: isAI ? "ai" : "human", confidence: confidence },
-      ];
+      const aiPercentage = result.ai_percentage;
 
       const analysisResult = {
         confidence: confidence,
         isAI: isAI,
-        highlights: highlights,
+        highlights: result.highlights,
         analyzedText: textInput,
+        aiPercentage: aiPercentage,
       };
 
       setAnalysisResult(analysisResult);
@@ -152,23 +149,20 @@ export default function Dashboard() {
       // Use the comprehensive PDF detection that handles both text and images
       const result = await detectPdf(pdfFile);
 
-      // Handle text analysis results with highlights for AI detected text
+      // Handle text analysis results with granular highlights
       let textAnalysisResult = null;
       if (result.text_result) {
         const isAI = result.text_result.label === "AI";
         const confidence = result.text_result.confidence * 100;
+        const aiPercentage = result.text_result.ai_percentage;
 
-        // For highlighting, we will mark the entire extracted text as AI or human
-        // In a real scenario, you might want to implement more granular highlighting
-            textAnalysisResult = {
-              confidence: confidence,
-              isAI: isAI,
-              highlights: [
-                // Highlight the entire text if AI detected, else no highlights
-                { start: 0, end: result.extracted_text.length, type: isAI ? "ai" : "human", confidence: confidence },
-              ],
-              analyzedText: result.extracted_text,
-            };
+        textAnalysisResult = {
+          confidence: confidence,
+          isAI: isAI,
+          highlights: result.text_result.highlights,
+          analyzedText: result.extracted_text,
+          aiPercentage: aiPercentage,
+        };
       }
 
       // Handle image analysis results
@@ -395,17 +389,28 @@ export default function Dashboard() {
                   <div className="space-y-4 p-6 rounded-lg glass border border-border/50">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-semibold">Analysis Results</h3>
-                      <Badge 
+                      <Badge
                         variant={analysisResult.isAI ? "destructive" : "default"}
                         className={analysisResult.isAI ? "bg-destructive" : "bg-neon-green"}
                       >
                         {analysisResult.isAI ? "AI Detected" : "Human Written"}
                       </Badge>
                     </div>
-                    
+
+                    {/* AI Percentage Display */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span>Confidence Level</span>
+                        <span>AI Content Percentage</span>
+                        <span className="font-medium text-warning">
+                          {analysisResult.aiPercentage.toFixed(1)}%
+                        </span>
+                      </div>
+                      <Progress value={analysisResult.aiPercentage} className="bg-background/30" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span>Overall Confidence</span>
                         <span className="font-medium">
                           {analysisResult.confidence.toFixed(1)}%
                         </span>
@@ -415,9 +420,9 @@ export default function Dashboard() {
 
                     <div className="space-y-4">
                       <div className="text-sm text-muted-foreground">
-                        {analysisResult.isAI 
-                          ? "This text shows patterns consistent with AI-generated content."
-                          : "This text appears to be human-written."
+                        {analysisResult.isAI
+                          ? `This text contains ${analysisResult.aiPercentage.toFixed(1)}% AI-generated content.`
+                          : `This text appears to be mostly human-written with only ${analysisResult.aiPercentage.toFixed(1)}% AI content.`
                         }
                       </div>
 
@@ -678,9 +683,21 @@ export default function Dashboard() {
                     {pdfAnalysisResult.textResult && (
                       <div className="space-y-4">
                         <h4 className="text-md font-medium">Text Content Analysis:</h4>
+
+                        {/* AI Percentage Display */}
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
-                            <span>Confidence Level</span>
+                            <span>AI Content Percentage</span>
+                            <span className="font-medium text-warning">
+                              {pdfAnalysisResult.textResult.aiPercentage.toFixed(1)}%
+                            </span>
+                          </div>
+                          <Progress value={pdfAnalysisResult.textResult.aiPercentage} className="bg-background/30" />
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span>Overall Confidence</span>
                             <span className="font-medium">
                               {pdfAnalysisResult.textResult.confidence.toFixed(1)}%
                             </span>
@@ -690,8 +707,8 @@ export default function Dashboard() {
 
                         <div className="text-sm text-muted-foreground">
                           {pdfAnalysisResult.textResult.isAI
-                            ? "This PDF text content shows patterns consistent with AI-generated text."
-                            : "This PDF text content appears to be human-written."
+                            ? `This PDF contains ${pdfAnalysisResult.textResult.aiPercentage.toFixed(1)}% AI-generated text content.`
+                            : `This PDF appears to be mostly human-written with only ${pdfAnalysisResult.textResult.aiPercentage.toFixed(1)}% AI content.`
                           }
                         </div>
 

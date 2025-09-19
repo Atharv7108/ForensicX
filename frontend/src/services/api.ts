@@ -5,6 +5,13 @@ const API_BASE_URL = "http://localhost:8000"; // Adjust if backend runs on diffe
 export interface TextDetectionResponse {
   label: string;
   confidence: number;
+  highlights: Array<{
+    start: number;
+    end: number;
+    type: string;
+    confidence: number;
+  }>;
+  ai_percentage: number;
 }
 
 export interface ImageDetectionResponse {
@@ -24,6 +31,13 @@ export interface PdfDetectionResponse {
   text_result: {
     label: string;
     confidence: number;
+    highlights: Array<{
+      start: number;
+      end: number;
+      type: string;
+      confidence: number;
+    }>;
+    ai_percentage: number;
   } | null;
   images: Array<{
     page: number;

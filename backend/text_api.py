@@ -4,6 +4,7 @@ import io
 import tempfile
 import pickle
 import torch
+import re
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -19,7 +20,7 @@ app = FastAPI(title="ForensicX Multi-Modal Detector API")
 # --- CORS middleware ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:8082"],  # Frontend URLs
+    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:8080"],  # Frontend URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -59,6 +60,59 @@ image_transform = transforms.Compose([
 # --- EasyOCR Reader ---
 ocr_reader = easyocr.Reader(['en'], gpu=torch.cuda.is_available())
 
+# --- Helper function for granular text analysis ---
+def analyze_text_granular(text: str, tokenizer, model, device):
+    """
+    Analyze text in sentences and return granular AI detection results.
+    """
+    # Split text into sentences using regex (basic sentence splitter)
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+
+    highlights = []
+    current_pos = 0
+    total_ai_length = 0
+    total_length = len(text)
+
+    for sentence in sentences:
+        if not sentence.strip():
+            continue
+
+        sentence_length = len(sentence)
+        sentence_start = current_pos
+        sentence_end = current_pos + sentence_length
+
+        # Analyze the sentence
+        inputs = tokenizer(sentence, return_tensors="pt", truncation=True, max_length=512)
+        with torch.no_grad():
+            outputs = model(**inputs)
+            logits = outputs.logits
+            probs = torch.softmax(logits, dim=1)
+            pred = torch.argmax(probs, dim=1).item()
+            confidence = probs[0, pred].item()
+
+        # If AI detected with confidence > 0.7, mark as AI highlight
+        if pred == 1 and confidence > 0.7:
+            highlights.append({
+                "start": sentence_start,
+                "end": sentence_end,
+                "type": "ai",
+                "confidence": confidence
+            })
+            total_ai_length += sentence_length
+        else:
+            highlights.append({
+                "start": sentence_start,
+                "end": sentence_end,
+                "type": "human",
+                "confidence": confidence
+            })
+
+        current_pos = sentence_end + 1  # +1 for space
+
+    ai_percentage = (total_ai_length / total_length * 100) if total_length > 0 else 0
+
+    return highlights, ai_percentage
+
 # --- Text request model ---
 class TextRequest(BaseModel):
     text: str
@@ -66,15 +120,16 @@ class TextRequest(BaseModel):
 # --- Text detection endpoint ---
 @app.post("/detect-text")
 def detect_text(req: TextRequest):
-    inputs = tokenizer(req.text, return_tensors="pt", truncation=True, max_length=512)
-    with torch.no_grad():
-        outputs = text_model(**inputs)
-        logits = outputs.logits
-        probs = torch.softmax(logits, dim=1)
-        pred = torch.argmax(probs, dim=1).item()
-        confidence = probs[0, pred].item()
-    label = "AI" if pred == 1 else "Human"
-    return {"label": label, "confidence": confidence}
+    highlights, ai_percentage = analyze_text_granular(req.text, tokenizer, text_model, device)
+    # Determine overall label based on AI percentage
+    overall_label = "AI" if ai_percentage > 50 else "Human"
+    overall_confidence = ai_percentage / 100 if overall_label == "AI" else (100 - ai_percentage) / 100
+    return {
+        "label": overall_label,
+        "confidence": overall_confidence,
+        "highlights": highlights,
+        "ai_percentage": ai_percentage
+    }
 
 # --- PDF helper ---
 def extract_text_and_images_from_pdf(pdf_path):
@@ -113,17 +168,18 @@ async def detect_pdf(file: UploadFile = File(...)):
     # Extract text and images
     text, images = extract_text_and_images_from_pdf(tmp_path)
 
-    # Text detection for full PDF text
+    # Granular text detection for PDF text
     if text.strip():
-        inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
-        with torch.no_grad():
-            outputs = text_model(**inputs)
-            logits = outputs.logits
-            probs = torch.softmax(logits, dim=1)
-            pred = torch.argmax(probs, dim=1).item()
-            confidence = probs[0, pred].item()
-        label = "AI" if pred == 1 else "Human"
-        text_result = {"label": label, "confidence": confidence}
+        highlights, ai_percentage = analyze_text_granular(text, tokenizer, text_model, device)
+        # Determine overall label based on AI percentage
+        overall_label = "AI" if ai_percentage > 50 else "Human"
+        overall_confidence = ai_percentage / 100 if overall_label == "AI" else (100 - ai_percentage) / 100
+        text_result = {
+            "label": overall_label,
+            "confidence": overall_confidence,
+            "highlights": highlights,
+            "ai_percentage": ai_percentage
+        }
     else:
         text_result = None
 
