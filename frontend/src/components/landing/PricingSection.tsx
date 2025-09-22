@@ -44,7 +44,7 @@ const plans = [
 	},
 	{
 		name: "Plus",
-		price: "₹8,199",
+		price: "₹5,499",
 		period: "/month",
 		description: "For teams and organizations with high-volume needs",
 		icon: Crown,
@@ -65,14 +65,13 @@ const plans = [
 
 const PLAN_PRICING = {
 	pro: 239900, // ₹2,399.00 in paise
-	plus: 819900, // ₹8,199.00 in paise
+	plus: 549900, // ₹5,499.00 in paise
 };
 
 function handlePayNow(
 	plan: "pro" | "plus",
 	setLoading: (b: boolean) => void,
 	setError: (e: string | null) => void,
-	setSuccess: (b: boolean) => void,
 	isAuthenticated: boolean,
 	navigate: any,
 	refreshUser: () => Promise<void>
@@ -80,7 +79,6 @@ function handlePayNow(
 	return async () => {
 		setLoading(true);
 		setError(null);
-		setSuccess(false);
 		
 		if (!isAuthenticated) {
 			setError("Please log in to upgrade your plan");
@@ -114,7 +112,8 @@ function handlePayNow(
 						);
 						// Refresh user data to update plan in UI
 						await refreshUser();
-						setSuccess(true);
+						// Redirect to dashboard after successful payment
+						window.location.href = '/dashboard';
 					} catch (e) {
 						setError("Payment verification failed");
 					}
@@ -137,7 +136,6 @@ function handlePayNow(
 export function PricingSection() {
 	const [loading, setLoading] = React.useState(false);
 	const [error, setError] = React.useState<string | null>(null);
-	const [success, setSuccess] = React.useState(false);
 	const { isAuthenticated, refreshUser } = useAuth();
 	const navigate = useNavigate();
 	return (
@@ -203,7 +201,7 @@ export function PricingSection() {
 									size="lg"
 									className={`w-full ${plan.popular ? "hover-glow" : ""}`}
 									disabled={loading}
-									onClick={handlePayNow("pro", setLoading, setError, setSuccess, isAuthenticated, navigate, refreshUser)}
+									onClick={handlePayNow("pro", setLoading, setError, isAuthenticated, navigate, refreshUser)}
 								>
 									Pay Now
 								</Button>
@@ -214,7 +212,7 @@ export function PricingSection() {
 									size="lg"
 									className="w-full"
 									disabled={loading}
-									onClick={handlePayNow("plus", setLoading, setError, setSuccess, isAuthenticated, navigate, refreshUser)}
+									onClick={handlePayNow("plus", setLoading, setError, isAuthenticated, navigate, refreshUser)}
 								>
 									Pay Now
 								</Button>
@@ -230,11 +228,6 @@ export function PricingSection() {
 								</Button>
 							)}
 							{error && <div className="text-red-600 mt-2">{error}</div>}
-							{success && (
-								<div className="text-green-600 mt-2">
-									Payment successful! Plan upgraded.
-								</div>
-							)}
 						</div>
 					))}
 				</div>

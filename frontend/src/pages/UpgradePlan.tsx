@@ -4,19 +4,17 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const PLAN_PRICING = {
   pro: 49900, // ₹499.00 in paise
-  plus: 99900, // ₹999.00 in paise
+  plus: 549900, // ₹5,499.00 in paise
 };
 
 export default function UpgradePlan() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [success, setSuccess] = React.useState(false);
   const { refreshUser } = useAuth();
 
   const handleUpgrade = async (plan: 'pro' | 'plus') => {
     setLoading(true);
     setError(null);
-    setSuccess(false);
     try {
       const token = localStorage.getItem('forensicx_token');
       if (!token) throw new Error('Not authenticated');
@@ -38,7 +36,8 @@ export default function UpgradePlan() {
             );
             // Refresh user data to update plan in UI
             await refreshUser();
-            setSuccess(true);
+            // Redirect to dashboard after successful payment
+            window.location.href = '/dashboard';
           } catch (e) {
             setError('Payment verification failed');
           }
@@ -73,7 +72,7 @@ export default function UpgradePlan() {
         </div>
         <div className="border rounded p-4 flex flex-col gap-2">
           <div className="font-semibold text-lg">Plus Plan</div>
-          <div>₹999/month</div>
+          <div>₹5,499/month</div>
           <button
             className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700"
             disabled={loading}
@@ -83,7 +82,6 @@ export default function UpgradePlan() {
           </button>
         </div>
         {error && <div className="text-red-600">{error}</div>}
-        {success && <div className="text-green-600">Payment successful! Plan upgraded.</div>}
       </div>
     </div>
   );
