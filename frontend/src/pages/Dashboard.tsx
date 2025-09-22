@@ -18,11 +18,15 @@ import {
   Video,
   Mic,
   Database,
+  Crown,
+  Star,
 } from "lucide-react";
 import { detectText, detectImage, detectPdf } from "@/services/api";
 import { Navbar } from "@/components/layout/Navbar";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [textInput, setTextInput] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
@@ -251,17 +255,61 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {/* Current Plan Card */}
+          <Card className="glass">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Current Plan</CardTitle>
+              {user?.plan_type === 'plus' ? (
+                <Crown className="h-4 w-4 text-yellow-500" />
+              ) : user?.plan_type === 'pro' ? (
+                <Star className="h-4 w-4 text-blue-500" />
+              ) : (
+                <Zap className="h-4 w-4 text-gray-500" />
+              )}
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-2 capitalize">
+                {user?.plan_type || 'Free'}
+              </div>
+              <Badge
+                variant="outline"
+                className={`
+                  ${user?.plan_type === 'plus' ? 'border-yellow-500 text-yellow-500' : ''}
+                  ${user?.plan_type === 'pro' ? 'border-blue-500 text-blue-500' : ''}
+                  ${(!user?.plan_type || user?.plan_type === 'free') ? 'border-gray-500 text-gray-500' : ''}
+                `}
+              >
+                {user?.plan_type === 'plus' ? 'Plus Plan' : 
+                 user?.plan_type === 'pro' ? 'Pro Plan' : 'Free Plan'}
+              </Badge>
+            </CardContent>
+          </Card>
+
           <Card className="glass">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Detections Used</CardTitle>
               <Zap className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold mb-2">247 / 1,000</div>
-              <Progress value={24.7} className="mb-2" />
+              <div className="text-2xl font-bold mb-2">
+                {user?.monthly_detections || 0} / {
+                  user?.plan_type === 'plus' ? '1,000' :
+                  user?.plan_type === 'pro' ? '500' : '20'
+                }
+              </div>
+              <Progress 
+                value={
+                  user?.plan_type === 'plus' ? ((user?.monthly_detections || 0) / 1000) * 100 :
+                  user?.plan_type === 'pro' ? ((user?.monthly_detections || 0) / 500) * 100 :
+                  ((user?.monthly_detections || 0) / 20) * 100
+                } 
+                className="mb-2" 
+              />
               <p className="text-xs text-muted-foreground">
-                753 detections remaining this month
+                {user?.plan_type === 'plus' ? `${1000 - (user?.monthly_detections || 0)} detections remaining` :
+                 user?.plan_type === 'pro' ? `${500 - (user?.monthly_detections || 0)} detections remaining` :
+                 `${20 - (user?.monthly_detections || 0)} detections remaining this month`}
               </p>
             </CardContent>
           </Card>

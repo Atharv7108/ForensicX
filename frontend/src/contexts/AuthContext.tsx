@@ -7,6 +7,7 @@ interface AuthContextType {
   login: (credentials: LoginRequest) => Promise<{ success: boolean; error?: string }>;
   register: (userData: RegisterRequest) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -108,12 +109,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const refreshUser = async () => {
+    try {
+      const userData = await getCurrentUser();
+      setUser(userData);
+    } catch (error) {
+      console.error('Failed to refresh user data:', error);
+    }
+  };
+
   const value = {
     user,
     loading,
     login,
     register,
     logout,
+    refreshUser,
     isAuthenticated: !!user
   };
 

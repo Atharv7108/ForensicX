@@ -11,6 +11,7 @@ import SignUp from "./pages/auth/SignUp";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
+import UpgradePlan from "./pages/UpgradePlan";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,11 @@ const App = () => (
             <Route path="/admin" element={
               <ProtectedRoute>
                 <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/upgrade" element={
+              <ProtectedRoute>
+                <UpgradePlan />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

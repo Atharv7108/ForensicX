@@ -5,7 +5,7 @@ import tempfile
 import pickle
 import torch
 import re
-from fastapi import FastAPI, UploadFile, File, Depends, WebSocket
+from fastapi import FastAPI, UploadFile, File, Depends, WebSocket, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from PIL import Image
@@ -18,8 +18,9 @@ import fitz  # PyMuPDF
 try:
     from .auth_routes import router as auth_router
     from .auth import get_current_active_user
-    from .database import User
+    from .database import User, get_db
     from .websocket_manager import manager
+    from .plan_limits import can_perform_detection, increment_detection_count, get_remaining_detections
     AUTH_AVAILABLE = True
 except ImportError:
     try:
@@ -29,8 +30,9 @@ except ImportError:
         sys.path.append(os.path.dirname(__file__))
         from auth_routes import router as auth_router
         from auth import get_current_active_user
-        from database import User
+        from database import User, get_db
         from websocket_manager import manager
+        from plan_limits import can_perform_detection, increment_detection_count, get_remaining_detections
         AUTH_AVAILABLE = True
     except ImportError as e:
         print(f"Authentication modules not available: {e}")
@@ -50,6 +52,18 @@ if AUTH_AVAILABLE:
         from .admin_routes import router as admin_router
         app.include_router(admin_router)
         print("✅ Admin routes loaded successfully")
+        # Register Razorpay payment router
+        try:
+            from .razorpay_routes import router as razorpay_router
+            app.include_router(razorpay_router, prefix="/api")
+            print("✅ Razorpay payment routes loaded successfully")
+        except ImportError:
+            try:
+                from razorpay_routes import router as razorpay_router
+                app.include_router(razorpay_router, prefix="/api")
+                print("✅ Razorpay payment routes loaded successfully")
+            except ImportError:
+                print("⚠️  Razorpay payment routes not available")
     except ImportError:
         try:
             from admin_routes import router as admin_router
@@ -162,16 +176,32 @@ class TextRequest(BaseModel):
 
 # --- Text detection endpoint ---
 @app.post("/detect-text")
-def detect_text(req: TextRequest):
+def detect_text(req: TextRequest, current_user: User = Depends(get_current_active_user), db = Depends(get_db)):
+    # Check if user can perform detection
+    if not can_perform_detection(current_user):
+        remaining = get_remaining_detections(current_user)
+        raise HTTPException(
+            status_code=429, 
+            detail=f"Detection limit exceeded. You have {remaining} detections remaining this month. Upgrade your plan for more detections."
+        )
+    
+    # Perform detection
     highlights, ai_percentage = analyze_text_granular(req.text, tokenizer, text_model, device)
+    
+    # Increment detection count
+    current_user = increment_detection_count(db, current_user)
+    
     # Determine overall label based on AI percentage
     overall_label = "AI" if ai_percentage > 50 else "Human"
     overall_confidence = ai_percentage / 100 if overall_label == "AI" else (100 - ai_percentage) / 100
+    
     return {
         "label": overall_label,
         "confidence": overall_confidence,
         "highlights": highlights,
-        "ai_percentage": ai_percentage
+        "ai_percentage": ai_percentage,
+        "detections_used": current_user.monthly_detections,
+        "remaining_detections": get_remaining_detections(current_user)
     }
 
 # --- PDF helper ---
@@ -202,7 +232,15 @@ def extract_text_and_images_from_pdf(pdf_path):
 
 # --- PDF detection endpoint ---
 @app.post("/detect-pdf")
-async def detect_pdf(file: UploadFile = File(...)):
+async def detect_pdf(file: UploadFile = File(...), current_user: User = Depends(get_current_active_user), db = Depends(get_db)):
+    # Check if user can perform detection
+    if not can_perform_detection(current_user):
+        remaining = get_remaining_detections(current_user)
+        raise HTTPException(
+            status_code=429, 
+            detail=f"Detection limit exceeded. You have {remaining} detections remaining this month. Upgrade your plan for more detections."
+        )
+    
     # Save uploaded PDF to temp file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         tmp.write(await file.read())
@@ -275,13 +313,30 @@ async def detect_pdf(file: UploadFile = File(...)):
             "text_result": text_result_img
         })
 
+    # Increment detection count
+    current_user = increment_detection_count(db, current_user)
+
     # Clean up temp file
     os.remove(tmp_path)
-    return {"text_result": text_result, "images": classified_images, "extracted_text": text}
+    return {
+        "text_result": text_result, 
+        "images": classified_images, 
+        "extracted_text": text,
+        "detections_used": current_user.monthly_detections,
+        "remaining_detections": get_remaining_detections(current_user)
+    }
 
 # --- Image detection endpoint with OCR integration ---
 @app.post("/detect-image")
-async def detect_image(file: UploadFile = File(...)):
+async def detect_image(file: UploadFile = File(...), current_user: User = Depends(get_current_active_user), db = Depends(get_db)):
+    # Check if user can perform detection
+    if not can_perform_detection(current_user):
+        remaining = get_remaining_detections(current_user)
+        raise HTTPException(
+            status_code=429, 
+            detail=f"Detection limit exceeded. You have {remaining} detections remaining this month. Upgrade your plan for more detections."
+        )
+    
     image_bytes = await file.read()
     pil_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     image = image_transform(pil_image).unsqueeze(0).to(device)
@@ -321,4 +376,12 @@ async def detect_image(file: UploadFile = File(...)):
     else:
         text_result = None
 
-    return {"image_result": image_result, "text_result": text_result}
+    # Increment detection count
+    current_user = increment_detection_count(db, current_user)
+
+    return {
+        "image_result": image_result, 
+        "text_result": text_result,
+        "detections_used": current_user.monthly_detections,
+        "remaining_detections": get_remaining_detections(current_user)
+    }
