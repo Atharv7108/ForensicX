@@ -42,6 +42,7 @@ except ImportError:
 # --- FastAPI app ---
 app = FastAPI(title="ForensicX Multi-Modal Detector API")
 
+
 # Include authentication routes if available
 if AUTH_AVAILABLE:
     app.include_router(auth_router)
@@ -94,7 +95,7 @@ with open(TEXT_MODEL_PATH, "rb") as f:
     text_model = data["model"]
     text_model.eval()
 
-# --- Load image model ---
+# --- Load image model (single legacy) ---
 IMAGE_MODEL_PATH = os.path.join(BASE_DIR, "models", "efficientnet_best.pth")
 image_classes = ['ai_enhanced', 'ai_generated', 'natural']
 

@@ -133,6 +133,7 @@ export async function detectText(text: string): Promise<TextDetectionResponse> {
 export async function detectImage(file: File): Promise<ImageDetectionResponse> {
   const formData = new FormData();
   formData.append("file", file);
+  // Use the original protected endpoint
   const response = await api.post("/detect-image", formData, {
     headers: {
       "Content-Type": "multipart/form-data",

@@ -1,0 +1,80 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Evaluate retrained model on remaining images",
+			"type": "shell",
+			"command": "python3",
+			"args": [
+				"scripts/test_unused_images.py",
+				"--model",
+				"models/efficientnet_retrained_best.pth",
+				"--forensicx",
+				"forensicx_dataset",
+				"--source-root",
+				"datasets_balanced",
+				"--classes",
+				"ai_enhanced",
+				"ai_generated",
+				"natural",
+				"--batch-size",
+				"32",
+				"--max-per-class",
+				"0"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Evaluate retrained model on remaining images",
+			"type": "shell",
+			"command": "python3",
+			"args": [
+				"scripts/test_unused_images.py",
+				"--model",
+				"models/efficientnet_retrained_best.pth",
+				"--forensicx",
+				"forensicx_dataset",
+				"--source-root",
+				"datasets_balanced",
+				"--classes",
+				"ai_enhanced",
+				"ai_generated",
+				"natural",
+				"--batch-size",
+				"32",
+				"--max-per-class",
+				"0"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Evaluate retrained model on remaining images (venv)",
+			"type": "shell",
+			"command": "/Users/atharvravindragole/Documents/Developer/ForensicX/.venv/bin/python",
+			"args": [
+				"scripts/test_unused_images.py",
+				"--model",
+				"models/efficientnet_retrained_best.pth",
+				"--forensicx",
+				"forensicx_dataset",
+				"--source-root",
+				"datasets_balanced",
+				"--classes",
+				"ai_enhanced",
+				"ai_generated",
+				"natural",
+				"--batch-size",
+				"32",
+				"--max-per-class",
+				"0"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}
