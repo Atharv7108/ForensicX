@@ -15,7 +15,7 @@ model_save_path = "models/efficientnet_best.pth"
 os.makedirs("models", exist_ok=True)
 
 # --- Device ---
-device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 print("Using device:", device)
 
 # --- Transforms ---

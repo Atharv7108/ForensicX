@@ -41,12 +41,13 @@ with open(TEXT_MODEL_PATH, "rb") as f:
 IMAGE_MODEL_PATH = os.path.join(BASE_DIR, "models", "efficientnet_best.pth")
 image_classes = ['ai_enhanced', 'ai_generated', 'natural']
 
-device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 image_model = models.efficientnet_b0(pretrained=False)
 num_ftrs = image_model.classifier[1].in_features
 image_model.classifier[1] = torch.nn.Linear(num_ftrs, len(image_classes))
-image_model.load_state_dict(torch.load(IMAGE_MODEL_PATH))
+# Load model with proper device mapping
+image_model.load_state_dict(torch.load(IMAGE_MODEL_PATH, map_location=device))
 image_model.to(device)
 image_model.eval()
 
