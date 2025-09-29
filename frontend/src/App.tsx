@@ -5,11 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import Index from "./pages/Index";
 import Login from "./pages/auth/Login";
 import SignUp from "./pages/auth/SignUp";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminSettings from "./pages/admin/AdminSettings";
 import NotFound from "./pages/NotFound";
 import UpgradePlan from "./pages/UpgradePlan";
 
@@ -31,11 +33,17 @@ const App = () => (
                 <Dashboard />
               </ProtectedRoute>
             } />
-            <Route path="/admin" element={
+            <Route path="/admin/*" element={
               <ProtectedRoute>
-                <AdminDashboard />
+                <AdminLayout />
               </ProtectedRoute>
-            } />
+            }>
+              <Route index element={<AdminDashboard />} />
+              <Route path="users" element={<AdminDashboard />} />
+              <Route path="analytics" element={<AdminDashboard />} />
+              <Route path="system" element={<AdminDashboard />} />
+              <Route path="settings" element={<AdminSettings />} />
+            </Route>
             <Route path="/upgrade" element={
               <ProtectedRoute>
                 <UpgradePlan />

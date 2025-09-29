@@ -139,9 +139,19 @@
     @apply bg-card/80 backdrop-blur-md border border-white/10;
   }
   
+  /* Enhanced glass effect for admin panels */
+  .glass-panel {
+    @apply bg-card/90 backdrop-blur-xl border border-white/20;
+    box-shadow: var(--shadow-glass);
+  }
+  
   /* Neon glow effects */
   .neon-glow {
     box-shadow: var(--shadow-neon);
+  }
+  
+  .neon-glow-intense {
+    box-shadow: 0 0 30px hsl(193 100% 50% / 0.5), 0 0 60px hsl(193 100% 50% / 0.3);
   }
   
   /* Gradient backgrounds */
@@ -157,6 +167,15 @@
     background: var(--gradient-card);
   }
 
+  /* Admin specific gradients */
+  .gradient-admin-sidebar {
+    background: linear-gradient(180deg, hsl(222 47% 8%), hsl(222 47% 5%));
+  }
+
+  .gradient-admin-header {
+    background: linear-gradient(90deg, hsl(222 47% 7% / 0.95), hsl(222 47% 9% / 0.95));
+  }
+
   /* Hover animations */
   .hover-glow {
     @apply transition-all duration-300;
@@ -167,6 +186,47 @@
     @apply scale-105;
   }
 
+  /* Subtle hover for admin elements */
+  .hover-lift {
+    @apply transition-all duration-200;
+  }
+  
+  .hover-lift:hover {
+    @apply transform -translate-y-1;
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Status indicators */
+  .status-online {
+    @apply relative;
+  }
+  
+  .status-online::before {
+    content: '';
+    @apply absolute -top-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-background;
+    animation: pulse 2s infinite;
+  }
+
+  /* Pulsing animations */
+  .pulse-soft {
+    animation: pulse-soft 3s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  /* Admin navigation states */
+  .nav-active {
+    @apply gradient-primary text-white shadow-lg;
+    box-shadow: var(--shadow-neon);
+  }
+  
+  .nav-inactive {
+    @apply glass hover:bg-muted/20 text-muted-foreground hover:text-foreground;
+  }
+
   /* AI detection highlights */
   .ai-detected {
     @apply bg-destructive/20 border-l-4 border-l-destructive;
@@ -174,5 +234,30 @@
   
   .human-content {
     @apply bg-success/20 border-l-4 border-l-success;
+  }
+
+  /* Data visualization elements */
+  .metric-card {
+    @apply glass gradient-card hover-lift rounded-xl p-6;
+  }
+  
+  .metric-value {
+    @apply text-3xl font-bold text-foreground;
+  }
+  
+  .metric-label {
+    @apply text-sm text-muted-foreground;
+  }
+
+  /* Loading states */
+  .loading-shimmer {
+    background: linear-gradient(90deg, transparent, hsl(222 47% 15%), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
   }
 }
