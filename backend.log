@@ -71,3 +71,57 @@ INFO:backend.razorpay_routes:Razorpay client initialized successfully
 /Users/atharvravindragole/Documents/Developer/ForensicX/.venv/lib/python3.9/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
   warnings.warn(msg)
 WARNING:easyocr.easyocr:Using CPU. Note: This module is much faster with a GPU.
+INFO:     Started server process [21738]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+✅ Authentication routes loaded successfully
+✅ Admin routes loaded successfully
+✅ Razorpay payment routes loaded successfully
+INFO:     127.0.0.1:56213 - "GET /auth/verify-token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56213 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56341 - "OPTIONS /detect-text HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56341 - "POST /detect-text HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56343 - "OPTIONS /detect-image HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56343 - "POST /detect-image HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56354 - "OPTIONS /detect-pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56354 - "POST /detect-pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56371 - "OPTIONS /auth/verify-token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56371 - "GET /auth/verify-token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56371 - "OPTIONS /auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56373 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56376 - "POST /detect-text HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56378 - "POST /detect-text HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56378 - "POST /detect-text HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56382 - "POST /detect-text HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56386 - "POST /detect-text HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56424 - "GET /auth/verify-token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56424 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56424 - "POST /detect-text HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "POST /detect-image HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56455 - "POST /detect-text HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56457 - "POST /detect-pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56491 - "POST /detect-pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56493 - "OPTIONS /detect-text HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56495 - "POST /detect-text HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56498 - "POST /detect-text HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56498 - "POST /detect-text HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56498 - "POST /detect-text HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56498 - "POST /detect-text HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56501 - "POST /detect-text HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56501 - "POST /detect-text HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56501 - "POST /detect-text HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56501 - "POST /detect-text HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56503 - "POST /detect-text HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56503 - "POST /detect-text HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56503 - "POST /detect-text HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56503 - "GET /auth/verify-token HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56514 - "OPTIONS /auth/login-json HTTP/1.1" 200 OK
+WARNING:passlib.handlers.bcrypt:(trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "/Users/atharvravindragole/Documents/Developer/ForensicX/.venv/lib/python3.9/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+AttributeError: module 'bcrypt' has no attribute '__about__'
+INFO:     127.0.0.1:56514 - "POST /auth/login-json HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56516 - "POST /auth/login-json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56516 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56520 - "POST /detect-text HTTP/1.1" 200 OK

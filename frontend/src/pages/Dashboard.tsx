@@ -20,6 +20,7 @@ import {
   Database,
   Crown,
   Star,
+  TrendingUp,
 } from "lucide-react";
 import { detectText, detectImage, detectPdf } from "@/services/api";
 import { Navbar } from "@/components/layout/Navbar";
@@ -44,11 +45,51 @@ export default function Dashboard() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   
+  // Detection history state
+  const [detectionHistory, setDetectionHistory] = useState<Array<{
+    type: 'Human' | 'AI';
+    confidence: number;
+    timestamp: Date;
+    contentType: 'text' | 'image' | 'pdf';
+  }>>([]);
+  
   // GSAP refs
   const dashboardRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const statsCardsRef = useRef<HTMLDivElement[]>([]);
   const tabsRef = useRef<HTMLDivElement>(null);
+
+  // Load detection history from localStorage on component mount
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('forensicx_detection_history');
+    if (savedHistory) {
+      try {
+        const parsedHistory = JSON.parse(savedHistory).map((item: any) => ({
+          ...item,
+          timestamp: new Date(item.timestamp)
+        }));
+        setDetectionHistory(parsedHistory);
+      } catch (error) {
+        console.error('Error loading detection history:', error);
+      }
+    }
+  }, []);
+
+  // Function to add detection result to history
+  const addToDetectionHistory = (type: 'Human' | 'AI', confidence: number, contentType: 'text' | 'image' | 'pdf') => {
+    const newDetection = {
+      type,
+      confidence,
+      timestamp: new Date(),
+      contentType
+    };
+    
+    const updatedHistory = [newDetection, ...detectionHistory].slice(0, 10); // Keep only last 10 results
+    setDetectionHistory(updatedHistory);
+    
+    // Save to localStorage
+    localStorage.setItem('forensicx_detection_history', JSON.stringify(updatedHistory));
+  };
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -159,6 +200,13 @@ export default function Dashboard() {
       };
 
       setAnalysisResult(analysisResult);
+      
+      // Add to detection history
+      addToDetectionHistory(
+        isAI ? 'AI' : 'Human',
+        confidence,
+        'text'
+      );
     } catch (error) {
       console.error("Error detecting text:", error);
       // Handle error - could show a toast or alert
@@ -209,6 +257,13 @@ export default function Dashboard() {
       };
 
       setImageAnalysisResult(analysisResult);
+      
+      // Add to detection history
+      addToDetectionHistory(
+        isAI ? 'AI' : 'Human',
+        confidence,
+        'image'
+      );
     } catch (error) {
       console.error("Error detecting image:", error);
       // Handle error
@@ -274,6 +329,15 @@ export default function Dashboard() {
       };
 
       setPdfAnalysisResult(analysisResult);
+      
+      // Add to detection history (use text result if available)
+      if (textAnalysisResult) {
+        addToDetectionHistory(
+          textAnalysisResult.isAI ? 'AI' : 'Human',
+          textAnalysisResult.confidence,
+          'pdf'
+        );
+      }
     } catch (error) {
       console.error("Error analyzing PDF:", error);
       // Handle error
@@ -426,14 +490,77 @@ export default function Dashboard() {
           >
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-              <CardTitle className="text-sm font-medium">Accuracy Rate</CardTitle>
-              <Shield className="h-4 w-4 text-neon-green group-hover:drop-shadow-[0_0_8px_rgba(34,197,94,0.8)] transition-all duration-300" />
+              <CardTitle className="text-sm font-medium">Detection History</CardTitle>
+              <TrendingUp className="h-4 w-4 text-blue-500 group-hover:drop-shadow-[0_0_8px_rgba(59,130,246,0.8)] transition-all duration-300" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-neon-green">99.3%</div>
-              <p className="text-xs text-muted-foreground">
-                Based on your last 100 detections
-              </p>
+              <div className="space-y-3">
+                {detectionHistory.length > 0 ? (
+                  <>
+                    {/* Mini Graph with real data */}
+                    <div className="flex items-end gap-1 h-12">
+                      {detectionHistory.slice(0, 7).reverse().map((detection, index) => (
+                        <div
+                          key={index}
+                          className={`flex-1 ${
+                            detection.type === 'Human' ? 'bg-neon-green' : 'bg-yellow-500'
+                          } rounded-sm transition-all duration-300 hover:opacity-80 relative group/bar`}
+                          style={{ height: `${(detection.confidence / 100) * 100}%` }}
+                        >
+                          <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-background/90 px-2 py-1 rounded text-xs opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap border border-border/30">
+                            {detection.type}: {detection.confidence.toFixed(1)}%<br/>
+                            <span className="text-muted-foreground">{detection.contentType}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Legend */}
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-neon-green rounded-full"></div>
+                          <span className="text-muted-foreground">Human</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          <span className="text-muted-foreground">AI</span>
+                        </div>
+                      </div>
+                      <span className="text-muted-foreground">Last {Math.min(detectionHistory.length, 7)} scans</span>
+                    </div>
+                    
+                    {/* Summary */}
+                    <div className="text-xs text-muted-foreground border-t border-border/20 pt-2">
+                      Average confidence: <span className="text-foreground font-medium">
+                        {(detectionHistory.slice(0, 7).reduce((acc, curr) => acc + curr.confidence, 0) / Math.min(detectionHistory.length, 7)).toFixed(1)}%
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Empty state */}
+                    <div className="flex items-center justify-center h-12 border-2 border-dashed border-border/30 rounded-lg">
+                      <p className="text-sm text-muted-foreground">No detections yet</p>
+                    </div>
+                    
+                    {/* Legend for empty state */}
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-neon-green rounded-full"></div>
+                          <span className="text-muted-foreground">Human</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          <span className="text-muted-foreground">AI</span>
+                        </div>
+                      </div>
+                      <span className="text-muted-foreground">Run some detections to see results</span>
+                    </div>
+                  </>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -524,16 +651,6 @@ export default function Dashboard() {
                       <Progress value={analysisResult.aiPercentage} className="bg-background/30" />
                     </div>
 
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Overall Confidence</span>
-                        <span className="font-medium">
-                          {analysisResult.confidence.toFixed(1)}%
-                        </span>
-                      </div>
-                      <Progress value={analysisResult.confidence} />
-                    </div>
-
                     <div className="space-y-4">
                       <div className="text-sm text-muted-foreground">
                         {analysisResult.isAI
@@ -620,22 +737,6 @@ export default function Dashboard() {
                   <div className="space-y-4 p-6 rounded-lg glass border border-border/50">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-semibold">Image Analysis Results</h3>
-                      <Badge
-                        variant={imageAnalysisResult.isAI ? "destructive" : "default"}
-                        className={imageAnalysisResult.isAI ? "bg-destructive" : "bg-neon-green"}
-                      >
-                        {imageAnalysisResult.isAI ? "AI Generated" : "Authentic"}
-                      </Badge>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Overall Confidence</span>
-                        <span className="font-medium">
-                          {imageAnalysisResult.confidence.toFixed(1)}%
-                        </span>
-                      </div>
-                      <Progress value={imageAnalysisResult.confidence} />
                     </div>
 
                     <div className="space-y-3">
@@ -809,16 +910,6 @@ export default function Dashboard() {
                             </span>
                           </div>
                           <Progress value={pdfAnalysisResult.textResult.aiPercentage} className="bg-background/30" />
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span>Overall Confidence</span>
-                            <span className="font-medium">
-                              {pdfAnalysisResult.textResult.confidence.toFixed(1)}%
-                            </span>
-                          </div>
-                          <Progress value={pdfAnalysisResult.textResult.confidence} />
                         </div>
 
                         <div className="text-sm text-muted-foreground">

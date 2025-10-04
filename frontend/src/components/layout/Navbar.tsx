@@ -84,10 +84,6 @@ export function Navbar() {
                 Admin Panel
               </Button>
             )}
-            
-            <Badge variant="secondary" className="glass">
-              Pro Plan
-            </Badge>
 
             {/* Profile Dropdown */}
             <DropdownMenu>
