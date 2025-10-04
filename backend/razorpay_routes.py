@@ -3,8 +3,13 @@ from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 import os
 import logging
-from .auth import get_current_active_user
-from .database import get_db, User
+
+try:
+    from .auth import get_current_active_user
+    from .database import get_db, User
+except ImportError:
+    from auth import get_current_active_user
+    from database import get_db, User
 
 router = APIRouter()
 

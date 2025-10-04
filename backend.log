@@ -1,0 +1,73 @@
+INFO:     Will watch for changes in these directories: ['/Users/atharvravindragole/Documents/Developer/ForensicX']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [18999] using WatchFiles
+/Users/atharvravindragole/Documents/Developer/ForensicX/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:backend.razorpay_routes:Razorpay Key ID: rzp_test_RKCU4kkAe3HIkw
+INFO:backend.razorpay_routes:Razorpay Key Secret: ************************
+INFO:backend.razorpay_routes:Razorpay client initialized successfully
+/Users/atharvravindragole/Documents/Developer/ForensicX/.venv/lib/python3.9/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/Users/atharvravindragole/Documents/Developer/ForensicX/.venv/lib/python3.9/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+WARNING:easyocr.easyocr:Using CPU. Note: This module is much faster with a GPU.
+INFO:     Started server process [19061]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+/Users/atharvravindragole/Documents/Developer/ForensicX/.venv/lib/python3.9/site-packages/fastapi/openapi/utils.py:246: UserWarning: Duplicate Operation ID get_stats_admin_stats_get for function get_stats at /Users/atharvravindragole/Documents/Developer/ForensicX/backend/admin_routes.py
+  warnings.warn(message, stacklevel=1)
+✅ Authentication routes loaded successfully
+✅ Admin routes loaded successfully
+✅ Razorpay payment routes loaded successfully
+INFO:     127.0.0.1:55326 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:backend.razorpay_routes:Creating order for user 7, plan: pro, amount: 239900
+INFO:backend.razorpay_routes:Order data: {'amount': 239900, 'currency': 'INR', 'payment_capture': 1, 'notes': {'user_id': '7', 'plan': 'pro'}}
+INFO:backend.razorpay_routes:Order created successfully: order_RPJdXKf1Sj169H
+INFO:     127.0.0.1:55375 - "POST /api/payment/create-order HTTP/1.1" 200 OK
+INFO:backend.razorpay_routes:Creating order for user 7, plan: plus, amount: 549900
+INFO:backend.razorpay_routes:Order data: {'amount': 549900, 'currency': 'INR', 'payment_capture': 1, 'notes': {'user_id': '7', 'plan': 'plus'}}
+INFO:backend.razorpay_routes:Order created successfully: order_RPJdkJN9wBLjdf
+INFO:     127.0.0.1:55437 - "POST /api/payment/create-order HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55762 - "OPTIONS /api/payment/verify HTTP/1.1" 200 OK
+INFO:backend.razorpay_routes:Verifying payment for user 7
+INFO:backend.razorpay_routes:Payment verified successfully, upgrading to plan: plus
+INFO:     127.0.0.1:55762 - "POST /api/payment/verify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55762 - "OPTIONS /auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55764 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55842 - "OPTIONS /auth/verify-token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55842 - "GET /auth/verify-token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55842 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55844 - "GET /auth/verify-token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55844 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55933 - "POST /api/payment/create-order HTTP/1.1" 401 Unauthorized
+WARNING:passlib.handlers.bcrypt:(trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "/Users/atharvravindragole/Documents/Developer/ForensicX/.venv/lib/python3.9/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+AttributeError: module 'bcrypt' has no attribute '__about__'
+INFO:     127.0.0.1:55969 - "POST /auth/login-json HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:55986 - "POST /auth/login-json HTTP/1.1" 200 OK
+WARNING:  Invalid HTTP request received.
+INFO:     127.0.0.1:56026 - "POST /api/payment/create-order HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56042 - "POST /auth/login-json HTTP/1.1" 200 OK
+INFO:backend.razorpay_routes:Creating order for user 1, plan: pro, amount: 999
+INFO:backend.razorpay_routes:Order data: {'amount': 999, 'currency': 'INR', 'payment_capture': 1, 'notes': {'user_id': '1', 'plan': 'pro'}}
+INFO:backend.razorpay_routes:Order created successfully: order_RPJgWqx15o1Kxg
+INFO:     127.0.0.1:56069 - "POST /api/payment/create-order HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56116 - "GET /auth/verify-token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56116 - "GET /auth/me HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'backend/razorpay_routes.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [19061]
+/Users/atharvravindragole/Documents/Developer/ForensicX/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:backend.razorpay_routes:Razorpay Key ID: rzp_test_RKCU4kkAe3HIkw
+INFO:backend.razorpay_routes:Razorpay Key Secret: ************************
+INFO:backend.razorpay_routes:Razorpay client initialized successfully
+/Users/atharvravindragole/Documents/Developer/ForensicX/.venv/lib/python3.9/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/Users/atharvravindragole/Documents/Developer/ForensicX/.venv/lib/python3.9/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+WARNING:easyocr.easyocr:Using CPU. Note: This module is much faster with a GPU.

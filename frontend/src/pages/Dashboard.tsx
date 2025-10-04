@@ -347,7 +347,7 @@ export default function Dashboard() {
         </div>
 
         {/* Enhanced Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {/* Current Plan Card */}
           <Card 
             ref={(el) => {
@@ -384,10 +384,16 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="glass">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Detections Used</CardTitle>
-              <Zap className="h-4 w-4 text-primary" />
+          <Card 
+            ref={(el) => {
+              if (el) statsCardsRef.current[1] = el;
+            }}
+            className="glass-dashboard relative overflow-hidden group transition-all duration-300"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+              <CardTitle className="text-sm font-medium">Total Detections</CardTitle>
+              <FileCheck className="h-4 w-4 text-blue-500 group-hover:drop-shadow-[0_0_8px_rgba(59,130,246,0.8)] transition-all duration-300" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold mb-2">
@@ -412,10 +418,16 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="glass">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <Card 
+            ref={(el) => {
+              if (el) statsCardsRef.current[2] = el;
+            }}
+            className="glass-dashboard relative overflow-hidden group transition-all duration-300"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium">Accuracy Rate</CardTitle>
-              <CheckCircle className="h-4 w-4 text-neon-green" />
+              <Shield className="h-4 w-4 text-neon-green group-hover:drop-shadow-[0_0_8px_rgba(34,197,94,0.8)] transition-all duration-300" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-neon-green">99.3%</div>
@@ -424,24 +436,11 @@ export default function Dashboard() {
               </p>
             </CardContent>
           </Card>
-
-          <Card className="glass">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">AI Content Found</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-warning" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-warning">23%</div>
-              <p className="text-xs text-muted-foreground">
-                Of analyzed content this month
-              </p>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Detection Tabs */}
         <Tabs defaultValue="text" className="space-y-6">
-          <TabsList className="glass grid w-full grid-cols-6">
+          <TabsList className="glass-dashboard grid w-full grid-cols-6">
             <TabsTrigger value="text" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Text

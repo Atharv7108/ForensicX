@@ -98,7 +98,10 @@ function handlePayNow(
 				navigate('/auth/login');
 				return;
 			}
+			
+			console.log(`Creating Razorpay order for ${plan} plan with amount ${PLAN_PRICING[plan]}`);
 			const order = await createRazorpayOrder(PLAN_PRICING[plan], plan, token);
+			console.log('Order created successfully:', order);
 			const options = {
 				key: "rzp_test_RKCU4kkAe3HIkw", // Your actual Razorpay test key
 				amount: order.amount,
@@ -130,7 +133,20 @@ function handlePayNow(
 			rzp.open();
 		} catch (e: any) {
 			console.error("Payment error:", e);
-			setError(e.message || "Payment failed. Please try again.");
+			let errorMessage = "Payment failed. Please try again.";
+			
+			if (e.response?.data?.detail) {
+				errorMessage = `Payment failed: ${e.response.data.detail}`;
+			} else if (e.response?.status === 401) {
+				errorMessage = "Authentication failed. Please log in again.";
+				navigate('/auth/login');
+			} else if (e.response?.status === 404) {
+				errorMessage = "Payment service unavailable. Please contact support.";
+			} else if (e.message) {
+				errorMessage = `Payment Error: ${e.message}`;
+			}
+			
+			setError(errorMessage);
 		} finally {
 			setLoading(false);
 		}

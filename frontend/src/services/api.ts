@@ -155,16 +155,28 @@ export async function detectPdf(file: File): Promise<PdfDetectionResponse> {
 
 // Razorpay payment API functions
 export async function createRazorpayOrder(amount: number, plan: 'pro' | 'plus', token: string) {
-  const res = await fetch(`${API_BASE_URL}/api/payment/create-order`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ amount, plan }),
-  });
-  if (!res.ok) throw new Error('Failed to create Razorpay order');
-  return res.json();
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/payment/create-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ amount, plan }),
+    });
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.detail || `HTTP ${res.status}: Failed to create payment order`);
+    }
+    
+    return res.json();
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Network error: Unable to connect to payment service');
+  }
 }
 
 export async function verifyRazorpayPayment(
@@ -173,18 +185,30 @@ export async function verifyRazorpayPayment(
   signature: string,
   token: string
 ) {
-  const res = await fetch(`${API_BASE_URL}/api/payment/verify`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      razorpay_payment_id: payment_id,
-      razorpay_order_id: order_id,
-      razorpay_signature: signature,
-    }),
-  });
-  if (!res.ok) throw new Error('Payment verification failed');
-  return res.json();
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/payment/verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        razorpay_payment_id: payment_id,
+        razorpay_order_id: order_id,
+        razorpay_signature: signature,
+      }),
+    });
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.detail || `HTTP ${res.status}: Payment verification failed`);
+    }
+    
+    return res.json();
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Network error: Unable to verify payment');
+  }
 }
