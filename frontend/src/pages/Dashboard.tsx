@@ -117,27 +117,14 @@ export default function Dashboard() {
     }
   };
 
-  const handlePdfUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePdfUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setPdfFile(file);
-
-      try {
-        // Extract text from PDF using the backend API
-        const result = await detectPdf(file);
-
-        // Use the extracted_text from API response if available
-        if (result.extracted_text) {
-          setPdfText(result.extracted_text);
-        } else if (result.text_result) {
-          setPdfText("PDF text extraction in progress... Click 'Analyze PDF Content' to process the document.");
-        } else {
-          setPdfText("No text found in the PDF document, or text extraction failed.");
-        }
-      } catch (error) {
-        console.error("Error extracting PDF text:", error);
-        setPdfText("Error extracting text from PDF. Please try again.");
-      }
+      // Don't extract text immediately - wait for user to click analyze
+      setPdfText("PDF file selected. Click 'Analyze PDF Content' to process the document.");
+      // Clear any previous analysis results
+      setPdfAnalysisResult(null);
     }
   };
 
