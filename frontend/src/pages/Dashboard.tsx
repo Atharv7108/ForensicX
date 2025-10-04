@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +24,11 @@ import {
 import { detectText, detectImage, detectPdf } from "@/services/api";
 import { Navbar } from "@/components/layout/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
+import { DashboardBackground } from "@/components/background/DashboardBackground";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -38,6 +43,101 @@ export default function Dashboard() {
   const [pdfAnalysisResult, setPdfAnalysisResult] = useState<any>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
+  
+  // GSAP refs
+  const dashboardRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const statsCardsRef = useRef<HTMLDivElement[]>([]);
+  const tabsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Set initial states
+      gsap.set([headerRef.current, tabsRef.current], {
+        opacity: 0,
+        y: 30
+      });
+
+      gsap.set(statsCardsRef.current, {
+        opacity: 0,
+        y: 50,
+        scale: 0.9
+      });
+
+      // Entrance animations
+      const tl = gsap.timeline();
+
+      tl.to(headerRef.current, {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: "power3.out"
+      })
+      .to(statsCardsRef.current, {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.6,
+        ease: "back.out(1.7)",
+        stagger: {
+          amount: 0.4,
+          from: "start"
+        }
+      }, "-=0.3")
+      .to(tabsRef.current, {
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        ease: "power2.out"
+      }, "-=0.2");
+
+      // Card hover animations
+      statsCardsRef.current.forEach((card) => {
+        if (card) {
+          card.addEventListener('mouseenter', () => {
+            gsap.to(card, {
+              y: -5,
+              scale: 1.02,
+              duration: 0.3,
+              ease: "power2.out"
+            });
+          });
+
+          card.addEventListener('mouseleave', () => {
+            gsap.to(card, {
+              y: 0,
+              scale: 1,
+              duration: 0.3,
+              ease: "power2.out"
+            });
+          });
+        }
+      });
+
+    }, dashboardRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  // Animation for analysis results
+  const animateResults = (resultElement: HTMLElement) => {
+    if (resultElement) {
+      gsap.fromTo(resultElement, 
+        {
+          opacity: 0,
+          y: 30,
+          scale: 0.95
+        },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.8,
+          ease: "back.out(1.7)"
+        }
+      );
+    }
+  };
 
   const handleTextAnalysis = async () => {
     if (!textInput.trim()) return;
@@ -229,28 +329,39 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div ref={dashboardRef} className="min-h-screen relative overflow-hidden">
+      {/* Dashboard-specific background */}
+      <DashboardBackground />
+      
       <Navbar />
       
       {/* Main Content */}
-      <div className="container mx-auto px-6 py-8 mt-16">{/* Added mt-16 for navbar spacing */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Detection Dashboard</h1>
+      <div className="container mx-auto px-6 py-8 mt-16 relative z-10">
+        <div ref={headerRef} className="mb-8">
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-primary via-foreground to-accent bg-clip-text text-transparent">
+            Detection Dashboard
+          </h1>
           <p className="text-muted-foreground">
             Analyze text, images, and documents for AI-generated content.
           </p>
         </div>
 
-        {/* Stats Cards */}
+        {/* Enhanced Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {/* Current Plan Card */}
-          <Card className="glass">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <Card 
+            ref={(el) => {
+              if (el) statsCardsRef.current[0] = el;
+            }}
+            className="glass-dashboard relative overflow-hidden group transition-all duration-300"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium">Current Plan</CardTitle>
               {user?.plan_type === 'plus' ? (
-                <Crown className="h-4 w-4 text-yellow-500" />
+                <Crown className="h-4 w-4 text-yellow-500 group-hover:drop-shadow-[0_0_8px_rgba(234,179,8,0.8)] transition-all duration-300" />
               ) : user?.plan_type === 'pro' ? (
-                <Star className="h-4 w-4 text-blue-500" />
+                <Star className="h-4 w-4 text-blue-500 group-hover:drop-shadow-[0_0_8px_rgba(59,130,246,0.8)] transition-all duration-300" />
               ) : (
                 <Zap className="h-4 w-4 text-gray-500" />
               )}
