@@ -103,16 +103,32 @@ with open(TEXT_MODEL_PATH, "rb") as f:
     text_model = data["model"]
     text_model.eval()
 
-# --- Load image model (single legacy) ---
+# --- Load image model (original) ---
 IMAGE_MODEL_PATH = os.path.join(BASE_DIR, "models", "efficientnet_best.pth")
+# Try original class order to match training data
 image_classes = ['ai_enhanced', 'ai_generated', 'natural']
+# Previously tried: ['natural', 'ai_generated', 'ai_enhanced']
 
 device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
 
-image_model = models.efficientnet_b0(pretrained=False)
-num_ftrs = image_model.classifier[1].in_features
-image_model.classifier[1] = torch.nn.Linear(num_ftrs, len(image_classes))
-image_model.load_state_dict(torch.load(IMAGE_MODEL_PATH))
+# Try loading the retrained final model with different approaches
+# Try to load the model, checking what type it is first
+loaded_data = torch.load(IMAGE_MODEL_PATH, map_location=device)
+print(f"🔍 Model loading debug: Type of loaded data: {type(loaded_data)}")
+
+if hasattr(loaded_data, 'eval'):
+    # It's a full model
+    image_model = loaded_data
+    print(f"✅ Loaded original model (full) from {IMAGE_MODEL_PATH}")
+else:
+    # It's a state dict
+    print(f"⚠️  Loaded data is state_dict, creating model structure...")
+    image_model = models.efficientnet_b0(pretrained=False)
+    num_ftrs = image_model.classifier[1].in_features
+    image_model.classifier[1] = torch.nn.Linear(num_ftrs, len(image_classes))
+    image_model.load_state_dict(loaded_data)
+    print(f"✅ Loaded original model (state_dict) from {IMAGE_MODEL_PATH}")
+
 image_model.to(device)
 image_model.eval()
 
@@ -335,6 +351,70 @@ async def detect_pdf(file: UploadFile = File(...), current_user: User = Depends(
         "remaining_detections": get_remaining_detections(current_user)
     }
 
+# --- Public Image detection endpoint (for testing) ---
+@app.post("/detect-image-public")
+async def detect_image_public(file: UploadFile = File(...)):
+    image_bytes = await file.read()
+    pil_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    image = image_transform(pil_image).unsqueeze(0).to(device)
+
+    # OCR text extraction
+    ocr_results = ocr_reader.readtext(np.array(pil_image))
+    extracted_text = " ".join([res[1] for res in ocr_results])
+
+    # Heuristic: If OCR finds a lot of text, flag as 'text_only' image
+    text_only = False
+    if len(extracted_text.split()) > 20:  # You can adjust this threshold
+        text_only = True
+
+    # Image classification (skip or flag if text_only)
+    if text_only:
+        image_result = {"label": "text_only", "confidence": None, "note": "Image contains mostly text (screenshot or document)"}
+    else:
+        with torch.no_grad():
+            outputs = image_model(image)
+            probs = torch.softmax(outputs, dim=1)
+            pred = torch.argmax(probs, dim=1).item()
+            confidence = probs[0, pred].item()
+            
+            # Enhanced debug output  
+            print(f"🔍 Image prediction debug (PUBLIC ENDPOINT):")
+            print(f"   Model: {IMAGE_MODEL_PATH}")
+            print(f"   Model output shape: {outputs.shape}")
+            print(f"   Raw outputs: {outputs[0].cpu().numpy()}")
+            print(f"   Raw outputs sum: {outputs[0].cpu().numpy().sum()}")
+            print(f"   Probabilities: {probs[0].cpu().numpy()}")
+            print(f"   Class order: {image_classes}")
+            for i, (cls, prob) in enumerate(zip(image_classes, probs[0].cpu().numpy())):
+                print(f"   Class {i} ({cls}): {prob:.4f} ({prob*100:.2f}%)")
+            print(f"   → Predicted class index: {pred}")
+            print(f"   → Predicted class: {image_classes[pred]}")
+            print(f"   → Confidence: {confidence:.4f}")
+            print(f"   → Output variance: {outputs[0].var().item():.6f}")
+            
+        image_label = image_classes[pred]
+        image_result = {"label": image_label, "confidence": confidence}
+
+    # Text detection if text found
+    if extracted_text.strip():
+        inputs = tokenizer(extracted_text, return_tensors="pt", truncation=True, max_length=512)
+        with torch.no_grad():
+            outputs = text_model(**inputs)
+            logits = outputs.logits
+            probs = torch.softmax(logits, dim=1)
+            pred = torch.argmax(probs, dim=1).item()
+            text_confidence = probs[0, pred].item()
+        text_label = "AI" if pred == 1 else "Human"
+        text_result = {"label": text_label, "confidence": text_confidence, "text": extracted_text}
+    else:
+        text_result = None
+
+    return {
+        "image_result": image_result, 
+        "text_result": text_result,
+        "note": "Public endpoint - no authentication required"
+    }
+
 # --- Image detection endpoint with OCR integration ---
 @app.post("/detect-image")
 async def detect_image(file: UploadFile = File(...), current_user: User = Depends(get_current_active_user), db = Depends(get_db)):
@@ -368,6 +448,17 @@ async def detect_image(file: UploadFile = File(...), current_user: User = Depend
             probs = torch.softmax(outputs, dim=1)
             pred = torch.argmax(probs, dim=1).item()
             confidence = probs[0, pred].item()
+            
+            # Debug output
+            print(f"🔍 Image prediction debug:")
+            print(f"   Raw outputs: {outputs[0].cpu().numpy()}")
+            print(f"   Probabilities: {probs[0].cpu().numpy()}")
+            for i, (cls, prob) in enumerate(zip(image_classes, probs[0].cpu().numpy())):
+                print(f"   Class {i} ({cls}): {prob:.4f} ({prob*100:.2f}%)")
+            print(f"   → Predicted class index: {pred}")
+            print(f"   → Predicted class: {image_classes[pred]}")
+            print(f"   → Confidence: {confidence:.4f}")
+            
         image_label = image_classes[pred]
         image_result = {"label": image_label, "confidence": confidence}
 

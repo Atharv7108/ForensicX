@@ -255,36 +255,4 @@ async def toggle_user_status(
         }
     }
 
-@router.get("/stats")
-async def get_stats(db: Session = Depends(get_db)):
-    """Get overall platform statistics"""
-    total_users = db.query(User).count()
-    active_users = db.query(User).filter(User.is_active == True).count()
-    total_detections = db.query(DetectionHistory).count()
-    
-    # Get detection types breakdown
-    detection_types = db.query(DetectionHistory.detection_type).distinct().all()
-    type_counts = {}
-    for dtype in detection_types:
-        count = db.query(DetectionHistory).filter(DetectionHistory.detection_type == dtype[0]).count()
-        type_counts[dtype[0]] = count
-    
-    # Get plan distribution
-    plan_types = db.query(User.plan_type).distinct().all()
-    plan_counts = {}
-    for ptype in plan_types:
-        count = db.query(User).filter(User.plan_type == ptype[0]).count()
-        plan_counts[ptype[0]] = count
-    
-    return {
-        "users": {
-            "total": total_users,
-            "active": active_users,
-            "inactive": total_users - active_users,
-            "by_plan": plan_counts
-        },
-        "detections": {
-            "total": total_detections,
-            "by_type": type_counts
-        }
-    }
+

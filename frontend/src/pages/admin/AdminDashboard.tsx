@@ -24,7 +24,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 interface User {
   id: number;
@@ -56,6 +56,8 @@ const ADMIN_EMAILS = ['admin@forensicx.com', 'atharvgole@gmail.com'];
 
 export default function AdminDashboard() {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,6 +66,36 @@ export default function AdminDashboard() {
 
   // Check if user is admin
   const isAdmin = user && ADMIN_EMAILS.includes(user.email);
+
+  // Determine active tab based on current route
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path === '/admin' || path === '/admin/') return 'overview';
+    if (path.includes('/users')) return 'users';
+    if (path.includes('/analytics')) return 'analytics';
+    if (path.includes('/system')) return 'system';
+    return 'overview';
+  };
+
+  const activeTab = getActiveTab();
+
+  // Handle tab changes by navigating to appropriate route
+  const handleTabChange = (tabValue: string) => {
+    switch (tabValue) {
+      case 'users':
+        navigate('/admin/users');
+        break;
+      case 'analytics':
+        navigate('/admin/analytics');
+        break;
+      case 'system':
+        navigate('/admin/system');
+        break;
+      default:
+        navigate('/admin');
+        break;
+    }
+  };
 
   // Redirect non-admin users
   if (!user) {
@@ -181,33 +213,14 @@ export default function AdminDashboard() {
           </Alert>
         )}
 
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="glass grid w-full grid-cols-4 lg:w-[400px]">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <PieChart className="w-4 h-4" />
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger value="system" className="flex items-center gap-2">
-              <Database className="w-4 h-4" />
-              System
-            </TabsTrigger>
-          </TabsList>
-
+        {/* Main Content */}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             {stats && (
               <>
                 {/* Key Metrics Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <Card className="glass gradient-card hover-glow">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
@@ -277,24 +290,7 @@ export default function AdminDashboard() {
                     </CardContent>
                   </Card>
 
-                  <Card className="glass gradient-card hover-glow">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium text-muted-foreground">System Health</CardTitle>
-                      <div className="p-2 rounded-lg bg-warning/10">
-                        <Zap className="h-4 w-4 text-warning" />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold text-success">98.5%</div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Uptime & Performance
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
-                        <span className="text-xs text-success">All systems operational</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+
                 </div>
 
                 {/* Plan Distribution Chart */}

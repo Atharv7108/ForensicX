@@ -26,6 +26,7 @@ import { detectText, detectImage, detectPdf } from "@/services/api";
 import { Navbar } from "@/components/layout/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
 import { DashboardBackground } from "@/components/background/DashboardBackground";
+import { UpgradePrompt } from "@/components/ui/UpgradePrompt";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -52,6 +53,10 @@ export default function Dashboard() {
     timestamp: Date;
     contentType: 'text' | 'image' | 'pdf';
   }>>([]);
+  
+  // Upgrade prompt state
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [upgradeMessage, setUpgradeMessage] = useState("");
   
   // GSAP refs
   const dashboardRef = useRef<HTMLDivElement>(null);
@@ -207,9 +212,33 @@ export default function Dashboard() {
         confidence,
         'text'
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error detecting text:", error);
-      // Handle error - could show a toast or alert
+      
+      // Handle quota exceeded for text detection
+      if (error.response?.status === 429) {
+        const message = error.response?.data?.detail || "You've reached your monthly detection limit. Upgrade your plan for more detections!";
+        setUpgradeMessage(message);
+        setShowUpgradePrompt(true);
+        
+        setAnalysisResult({
+          confidence: 0,
+          isAI: false,
+          detectedElements: [],
+          highlights: [],
+          aiPercentage: 0,
+          errorMessage: message
+        });
+      } else {
+        setAnalysisResult({
+          confidence: 0,
+          isAI: false,
+          detectedElements: [],
+          highlights: [],
+          aiPercentage: 0,
+          errorMessage: `Analysis failed: ${error.message || 'Unknown error'}`
+        });
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -241,7 +270,7 @@ export default function Dashboard() {
       const detectedElements = [
         { type: "AI Generated", confidence: result.image_result.label === "ai_generated" ? confidence : 0, selected: result.image_result.label === "ai_generated" },
         { type: "AI Enhanced", confidence: result.image_result.label === "ai_enhanced" ? confidence : 0, selected: result.image_result.label === "ai_enhanced" },
-        { type: "Real", confidence: result.image_result.label === "natural" ? confidence : 0, selected: result.image_result.label === "natural" },
+        { type: "Natural", confidence: result.image_result.label === "natural" ? confidence : 0, selected: result.image_result.label === "natural" },
       ];
 
       const analysisResult = {
@@ -264,9 +293,43 @@ export default function Dashboard() {
         confidence,
         'image'
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error detecting image:", error);
-      // Handle error
+      
+      // Handle different error types
+      if (error.response?.status === 401) {
+        setImageAnalysisResult({
+          image_result: {
+            label: "Authentication Required",
+            confidence: null,
+            note: "Please log in to use image detection. You will be redirected to login."
+          },
+          text_result: null
+        });
+      } else if (error.response?.status === 429) {
+        // Quota exceeded - show upgrade prompt
+        const message = error.response?.data?.detail || "You've reached your monthly detection limit. Upgrade your plan for more detections!";
+        setUpgradeMessage(message);
+        setShowUpgradePrompt(true);
+        
+        setImageAnalysisResult({
+          image_result: {
+            label: "Limit Exceeded",
+            confidence: null,
+            note: message
+          },
+          text_result: null
+        });
+      } else {
+        setImageAnalysisResult({
+          image_result: {
+            label: "Error",
+            confidence: null,
+            note: `Analysis failed: ${error.message || 'Unknown error'}`
+          },
+          text_result: null
+        });
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -338,9 +401,29 @@ export default function Dashboard() {
           'pdf'
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error analyzing PDF:", error);
-      // Handle error
+      
+      // Handle quota exceeded for PDF detection
+      if (error.response?.status === 429) {
+        const message = error.response?.data?.detail || "You've reached your monthly detection limit. Upgrade your plan for more detections!";
+        setUpgradeMessage(message);
+        setShowUpgradePrompt(true);
+        
+        setPdfAnalysisResult({
+          textResult: null,
+          imageResults: [],
+          extractedText: "",
+          errorMessage: message
+        });
+      } else {
+        setPdfAnalysisResult({
+          textResult: null,
+          imageResults: [],
+          extractedText: "",
+          errorMessage: `Analysis failed: ${error.message || 'Unknown error'}`
+        });
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -632,14 +715,27 @@ export default function Dashboard() {
                   <div className="space-y-4 p-6 rounded-lg glass border border-border/50">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-semibold">Analysis Results</h3>
-                      <Badge
-                        variant={analysisResult.isAI ? "destructive" : "default"}
-                        className={analysisResult.isAI ? "bg-destructive" : "bg-neon-green"}
-                      >
-                        {analysisResult.isAI ? "AI Detected" : "Human Written"}
-                      </Badge>
+                      {!analysisResult.errorMessage && (
+                        <Badge
+                          variant={analysisResult.isAI ? "destructive" : "default"}
+                          className={analysisResult.isAI ? "bg-destructive" : "bg-neon-green"}
+                        >
+                          {analysisResult.isAI ? "AI Detected" : "Human Written"}
+                        </Badge>
+                      )}
                     </div>
 
+                    {/* Handle error states for text analysis */}
+                    {analysisResult.errorMessage ? (
+                      <div className="flex items-center gap-3 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800">
+                        <AlertTriangle className="w-5 h-5 text-red-600" />
+                        <div>
+                          <p className="font-medium">Analysis Error</p>
+                          <p className="text-sm text-red-600">{analysisResult.errorMessage}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
                     {/* AI Percentage Display */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
@@ -678,6 +774,8 @@ export default function Dashboard() {
                         </div>
                       )}
                     </div>
+                    </>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -739,9 +837,27 @@ export default function Dashboard() {
                       <h3 className="text-lg font-semibold">Image Analysis Results</h3>
                     </div>
 
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-medium">Detection Results:</h4>
-                      {imageAnalysisResult.detectedElements.map((element: any, index: number) => (
+                    {/* Handle error states */}
+                    {imageAnalysisResult.image_result?.label === "Limit Exceeded" ? (
+                      <div className="flex items-center gap-3 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800">
+                        <AlertTriangle className="w-5 h-5 text-red-600" />
+                        <div>
+                          <p className="font-medium">Detection Limit Reached</p>
+                          <p className="text-sm text-red-600">{imageAnalysisResult.image_result.note}</p>
+                        </div>
+                      </div>
+                    ) : imageAnalysisResult.image_result?.label === "Error" ? (
+                      <div className="flex items-center gap-3 p-4 rounded-lg bg-orange-50 border border-orange-200 text-orange-800">
+                        <AlertTriangle className="w-5 h-5 text-orange-600" />
+                        <div>
+                          <p className="font-medium">Analysis Error</p>
+                          <p className="text-sm text-orange-600">{imageAnalysisResult.image_result.note}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium">Detection Results:</h4>
+                        {imageAnalysisResult.detectedElements?.map((element: any, index: number) => (
                         <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-background/30 border border-border/20">
                           <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
                             element.selected
@@ -757,8 +873,9 @@ export default function Dashboard() {
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
 
                     {/* OCR Text and Analysis */}
                     {imageAnalysisResult.ocrText && (
@@ -1085,6 +1202,13 @@ export default function Dashboard() {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Upgrade Prompt Modal */}
+      <UpgradePrompt 
+        isOpen={showUpgradePrompt}
+        onClose={() => setShowUpgradePrompt(false)}
+        message={upgradeMessage}
+      />
     </div>
   );
 }
