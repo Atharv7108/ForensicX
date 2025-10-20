@@ -1,0 +1,4 @@
+text,model,temperature,lang
+"Write a formal essay about 'education'. Be coherent and factual when possible. Include details and examples. Length: long.
+
+[Simulated gemini-2.5-flash-preview-05-20 output at temperature 0.2 due to: RetryError[<Future at 0x118e12550 state=finished raised ResourceExhausted>]]",gemini-2.5-flash-preview-05-20,0.2,en

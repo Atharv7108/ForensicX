@@ -217,6 +217,33 @@ Content-Type: application/json
   "text": "Your text content here..."
 }
 ```
+### 🧠 Training the Human vs AI text model (v2)
+
+We now support a higher-accuracy transformer-based text detector.
+
+1) Prepare CSV datasets with columns: `text`, `label` where label ∈ {human, ai} or {0,1}.
+
+2) Train:
+
+```bash
+python scripts/train_text_detector.py \
+  --train-csv data/train.csv \
+  --val-csv data/val.csv \
+  --model-name roberta-base \
+  --epochs 3 --batch-size 16 \
+  --save-dir models/text_detector_v2 \
+  --pickle-out models/text_model_v2.pkl
+```
+
+3) Evaluate:
+
+```bash
+python scripts/eval_text_detector.py \
+  --csv data/test.csv \
+  --model-dir models/text_detector_v2
+```
+
+Backend will automatically prefer `models/text_detector_v2/` if present, otherwise fall back to `models/text_model_v2.pkl`, and finally `models/text_model.pkl`.
 
 **Response:**
 ```json

@@ -81,21 +81,29 @@ function handlePayNow(
 	refreshUser: () => Promise<void>
 ) {
 	return async () => {
+		console.log('Payment initiated for plan:', plan);
+		console.log('Authentication status:', isAuthenticated);
+		
 		setLoading(true);
 		setError(null);
 		
 		if (!isAuthenticated) {
+			console.log('User not authenticated, redirecting to login');
 			setError("Please log in to upgrade your plan");
-			navigate('/auth/login');
+			navigate('/login');
 			setLoading(false);
 			return;
 		}
 		
 		try {
 			const token = localStorage.getItem("forensicx_token");
+			console.log('Token found:', !!token);
+			
 			if (!token) {
+				console.log('No token found, redirecting to login');
 				setError("Please log in to upgrade your plan");
-				navigate('/auth/login');
+				navigate('/login');
+				setLoading(false);
 				return;
 			}
 			
@@ -139,7 +147,7 @@ function handlePayNow(
 				errorMessage = `Payment failed: ${e.response.data.detail}`;
 			} else if (e.response?.status === 401) {
 				errorMessage = "Authentication failed. Please log in again.";
-				navigate('/auth/login');
+				navigate('/login');
 			} else if (e.response?.status === 404) {
 				errorMessage = "Payment service unavailable. Please contact support.";
 			} else if (e.message) {
@@ -156,7 +164,7 @@ function handlePayNow(
 export function PricingSection() {
 	const [loading, setLoading] = React.useState(false);
 	const [error, setError] = React.useState<string | null>(null);
-	const { isAuthenticated, refreshUser } = useAuth();
+	const { isAuthenticated, refreshUser, loading: authLoading } = useAuth();
 	const navigate = useNavigate();
 	
 	const sectionRef = useRef<HTMLElement>(null);
@@ -432,6 +440,11 @@ export function PricingSection() {
 						Scale your AI detection capabilities with flexible pricing options
 						designed for individuals, professionals, and enterprises.
 					</p>
+					{error && (
+						<div className="mt-6 mx-auto max-w-md p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+							{error}
+						</div>
+					)}
 				</div>
 				
 				<div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -487,10 +500,10 @@ export function PricingSection() {
 										variant={plan.buttonVariant}
 										size="lg"
 										className={`pricing-button w-full ${plan.popular ? "hover-glow" : ""} transition-all duration-300`}
-										disabled={loading}
+										disabled={loading || authLoading}
 										onClick={handlePayNow("pro", setLoading, setError, isAuthenticated, navigate, refreshUser)}
 									>
-										Pay Now
+										{authLoading ? "Loading..." : "Pay Now"}
 									</Button>
 								)}
 								{plan.name === "Plus" && (
@@ -498,10 +511,10 @@ export function PricingSection() {
 										variant={plan.buttonVariant}
 										size="lg"
 										className="pricing-button w-full transition-all duration-300"
-										disabled={loading}
+										disabled={loading || authLoading}
 										onClick={handlePayNow("plus", setLoading, setError, isAuthenticated, navigate, refreshUser)}
 									>
-										Pay Now
+										{authLoading ? "Loading..." : "Pay Now"}
 									</Button>
 								)}
 								{plan.name === "Free" && (

@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8001"; // Backend is running on port 8001
+// Prefer env-configured API base; fallback to 8001 where the backend is running
+const API_BASE_URL = (import.meta as any)?.env?.VITE_API_BASE || "http://localhost:8001";
 
 // Create axios instance with default config
 const api = axios.create({
@@ -18,22 +19,6 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
-
-// Add response interceptor to handle 401 errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid, clear it
-      localStorage.removeItem('forensicx_token');
-      // Redirect to login if not already there
-      if (!window.location.pathname.includes('/auth/login')) {
-        window.location.href = '/auth/login';
-      }
-    }
-    return Promise.reject(error);
-  }
-);
 
 // Authentication interfaces
 export interface LoginRequest {
@@ -149,36 +134,8 @@ export async function detectText(text: string): Promise<TextDetectionResponse> {
 export async function detectImage(file: File): Promise<ImageDetectionResponse> {
   const formData = new FormData();
   formData.append("file", file);
-  
-  try {
-    // Try the protected endpoint first
-    const response = await api.post("/detect-image", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-    return response.data;
-  } catch (error: any) {
-    // If authentication fails, fallback to public endpoint
-    if (error.response?.status === 401) {
-      console.log("🔓 Authentication failed, using public endpoint for testing");
-      const response = await api.post("/detect-image-public", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      return response.data;
-    }
-    // Re-throw other errors
-    throw error;
-  }
-}
-
-// Public image detection (for testing without authentication)
-export async function detectImagePublic(file: File): Promise<ImageDetectionResponse> {
-  const formData = new FormData();
-  formData.append("file", file);
-  const response = await api.post("/detect-image-public", formData, {
+  // Use the original protected endpoint
+  const response = await api.post("/detect-image", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
