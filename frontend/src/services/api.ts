@@ -20,6 +20,22 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Add response interceptor to handle common errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Enhance error information for better handling
+    if (error.response?.status === 429) {
+      error.isPlanLimitExceeded = true;
+      error.message = error.response.data?.detail || "Detection limit exceeded. Please upgrade your plan.";
+    } else if (error.response?.status === 401) {
+      error.isAuthError = true;
+      error.message = "Authentication failed. Please log in again.";
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Authentication interfaces
 export interface LoginRequest {
   email: string;

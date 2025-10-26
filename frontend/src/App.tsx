@@ -13,7 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminSettings from "./pages/admin/AdminSettings";
 import NotFound from "./pages/NotFound";
-import UpgradePlan from "./pages/UpgradePlan";
+
 
 const queryClient = new QueryClient();
 
@@ -44,11 +44,7 @@ const App = () => (
               <Route path="system" element={<AdminDashboard />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
-            <Route path="/upgrade" element={
-              <ProtectedRoute>
-                <UpgradePlan />
-              </ProtectedRoute>
-            } />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

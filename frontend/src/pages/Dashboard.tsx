@@ -28,11 +28,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { DashboardBackground } from "@/components/background/DashboardBackground";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [textInput, setTextInput] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
@@ -42,6 +46,7 @@ export default function Dashboard() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfText, setPdfText] = useState("");
   const [pdfAnalysisResult, setPdfAnalysisResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   
@@ -58,6 +63,61 @@ export default function Dashboard() {
   const headerRef = useRef<HTMLDivElement>(null);
   const statsCardsRef = useRef<HTMLDivElement[]>([]);
   const tabsRef = useRef<HTMLDivElement>(null);
+
+  // Helper function to navigate to pricing section
+  const navigateToPricing = () => {
+    // Direct navigation to pricing section with hash
+    window.location.href = '/#pricing';
+  };
+
+  // Helper function to handle API errors
+  const handleApiError = (error: any) => {
+    console.error("API Error:", error);
+    
+    // Check if it's a plan limit exceeded error
+    if (error?.isPlanLimitExceeded || error?.response?.status === 429) {
+      const errorMessage = "Detection limit exceeded. Please upgrade your plan for more detections.";
+      setError(errorMessage);
+      
+      // Show toast notification
+      toast({
+        title: "Plan Limit Reached",
+        description: "You've reached your monthly detection limit. Redirecting to pricing section...",
+        variant: "destructive",
+        duration: 5000,
+      });
+      
+      // Redirect to pricing section after 3 seconds to give user time to read
+      setTimeout(() => {
+        navigateToPricing();
+      }, 3000);
+      return true;
+    }
+    
+    // Check for authentication errors
+    if (error?.isAuthError || error?.response?.status === 401) {
+      setError("Authentication failed. Please log in again.");
+      toast({
+        title: "Authentication Error",
+        description: "Please log in again to continue.",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+      return true;
+    }
+    
+    // Generic error handling
+    const errorMessage = error?.message || error?.response?.data?.detail || "An error occurred during analysis.";
+    setError(errorMessage);
+    toast({
+      title: "Analysis Error",
+      description: errorMessage,
+      variant: "destructive",
+    });
+    return false;
+  };
 
   // Load detection history from localStorage on component mount
   useEffect(() => {
@@ -184,6 +244,7 @@ export default function Dashboard() {
     if (!textInput.trim()) return;
 
     setIsAnalyzing(true);
+    setError(null); // Clear any previous errors
 
     try {
       const result = await detectText(textInput);
@@ -208,8 +269,7 @@ export default function Dashboard() {
         'text'
       );
     } catch (error) {
-      console.error("Error detecting text:", error);
-      // Handle error - could show a toast or alert
+      handleApiError(error);
     } finally {
       setIsAnalyzing(false);
     }
@@ -231,6 +291,7 @@ export default function Dashboard() {
     if (!imageFile) return;
 
     setIsAnalyzing(true);
+    setError(null); // Clear any previous errors
 
     try {
       const result = await detectImage(imageFile);
@@ -265,8 +326,7 @@ export default function Dashboard() {
         'image'
       );
     } catch (error) {
-      console.error("Error detecting image:", error);
-      // Handle error
+      handleApiError(error);
     } finally {
       setIsAnalyzing(false);
     }
@@ -287,6 +347,7 @@ export default function Dashboard() {
     if (!pdfFile) return;
 
     setIsAnalyzing(true);
+    setError(null); // Clear any previous errors
 
     try {
       // Use the comprehensive PDF detection that handles both text and images
@@ -339,8 +400,7 @@ export default function Dashboard() {
         );
       }
     } catch (error) {
-      console.error("Error analyzing PDF:", error);
-      // Handle error
+      handleApiError(error);
     } finally {
       setIsAnalyzing(false);
     }
@@ -409,6 +469,28 @@ export default function Dashboard() {
             Analyze text, images, and documents for AI-generated content.
           </p>
         </div>
+
+        {/* Error Message Display */}
+        {error && (
+          <div className="mb-6 p-4 bg-destructive/10 border border-destructive/30 text-destructive rounded-lg flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" />
+            <div className="flex-1">
+              <span>{error}</span>
+              {error.includes("Detection limit exceeded") && (
+                <div className="mt-2">
+                  <Button 
+                    onClick={navigateToPricing}
+                    size="sm"
+                    className="hover-glow"
+                  >
+                    <Crown className="w-4 h-4 mr-2" />
+                    Upgrade Plan Now
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Enhanced Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

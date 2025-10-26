@@ -11,9 +11,26 @@ import { MatrixRain } from "@/components/background/MatrixRain";
 import { AINetworkVisualization } from "@/components/background/AINetworkVisualization";
 import { SeamlessTransition } from "@/components/background/SeamlessTransition";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 const Index = () => {
   const { user } = useAuth();
+
+  // Handle hash navigation on component mount
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      // Remove the # from the hash
+      const elementId = hash.substring(1);
+      const element = document.getElementById(elementId);
+      if (element) {
+        // Small delay to ensure page is fully loaded
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+    }
+  }, []);
 
   return (
     <div className="min-h-screen relative">
