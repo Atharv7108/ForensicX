@@ -207,7 +207,7 @@ export default function AdminDashboard() {
             {stats && (
               <>
                 {/* Key Metrics Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <Card className="glass gradient-card hover-glow">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
@@ -273,25 +273,6 @@ export default function AdminDashboard() {
                           <FileX className="w-3 h-3 mr-1" />
                           PDF: {stats.detections?.by_type?.pdf ?? 0}
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="glass gradient-card hover-glow">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium text-muted-foreground">System Health</CardTitle>
-                      <div className="p-2 rounded-lg bg-warning/10">
-                        <Zap className="h-4 w-4 text-warning" />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold text-success">98.5%</div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Uptime & Performance
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
-                        <span className="text-xs text-success">All systems operational</span>
                       </div>
                     </CardContent>
                   </Card>
