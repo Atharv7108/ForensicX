@@ -83,10 +83,10 @@ export default function AdminDashboard() {
       setError(null);
 
       const [usersResponse, statsResponse] = await Promise.all([
-        fetch('http://127.0.0.1:8001/admin/users/live', {
+        fetch('http://127.0.0.1:8000/admin/users/live', {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch('http://127.0.0.1:8001/admin/dashboard', {
+        fetch('http://127.0.0.1:8000/admin/dashboard', {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
