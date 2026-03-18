@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Prefer env-configured API base; fallback to 8000 where the backend is running
-const API_BASE_URL = (import.meta as any)?.env?.VITE_API_BASE || "http://localhost:8000";
+
 
 // Create axios instance with default config
 const api = axios.create({

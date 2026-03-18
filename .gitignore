@@ -32,3 +32,12 @@ server.log
 
 # Editor
 .vscode/
+
+# Deployment exclusions (large ML files)
+models/
+data/
+*.pth
+*.pkl
+*.db
+forensicx.db
+.DS_Store

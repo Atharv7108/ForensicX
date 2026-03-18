@@ -95,19 +95,7 @@ else:
 # --- Base directory ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# --- Load text model ---
-TEXT_MODEL_PATH = os.path.join(BASE_DIR, "models", "text_model.pkl")
-with open(TEXT_MODEL_PATH, "rb") as f:
-    data = pickle.load(f)
-    tokenizer = data["tokenizer"]
-    text_model = data["model"]
-    text_model.eval()
-
-# --- Load image model (single legacy) ---
-IMAGE_MODEL_PATH = os.path.join(BASE_DIR, "models", "efficientnet_best.pth")
-image_classes = ['ai_enhanced', 'ai_generated', 'natural']
-
-device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
+# --- Load ML models
 
 image_model = models.efficientnet_b0(pretrained=False)
 num_ftrs = image_model.classifier[1].in_features
