@@ -1,0 +1,14 @@
+fastapi==0.110.0
+uvicorn[standard]==0.27.1
+sqlalchemy
+psycopg2-binary
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+pydantic
+alembic
+python-dotenv
+httpx
+websockets
+razorpay
+email-validator
